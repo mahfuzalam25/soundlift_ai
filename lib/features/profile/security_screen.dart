@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/settings_tile.dart';
 import '../../shared/dialogs/custom_snackbar.dart';
+import 'profile_provider.dart';
 
-class SecurityScreen extends StatefulWidget {
+class SecurityScreen extends ConsumerStatefulWidget {
   const SecurityScreen({super.key});
 
   @override
-  State<SecurityScreen> createState() => _SecurityScreenState();
+  ConsumerState<SecurityScreen> createState() => _SecurityScreenState();
 }
 
-class _SecurityScreenState extends State<SecurityScreen> {
-  bool _isGoogleConnected = true;
-  bool _is2FAEnabled = false;
-
+class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   @override
   Widget build(BuildContext context) {
+    final profileState = ref.watch(profileControllerProvider);
+    final profile = profileState.profile;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -28,7 +30,11 @@ class _SecurityScreenState extends State<SecurityScreen> {
         ),
         title: const Text(
           "Account Security",
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -36,11 +42,18 @@ class _SecurityScreenState extends State<SecurityScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 24),
-            
+
             // Settings Section
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.0),
-              child: Text("Account Settings", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text(
+                "Account Settings",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             Container(
@@ -54,41 +67,53 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 children: [
                   SettingsTile(
                     title: "Email Verification",
-                    subtitle: "hello@meetsfixer.com",
+                    subtitle: profile?.email ?? "Loading...",
                     icon: Icons.mark_email_read_outlined,
                     trailing: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.success.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text("Verified", style: TextStyle(color: AppColors.success, fontSize: 12, fontWeight: FontWeight.w600)),
+                      child: const Text(
+                        "Verified",
+                        style: TextStyle(
+                          color: AppColors.success,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                  _buildDivider(),
-                  SettingsTile(
-                    title: "Change Password",
-                    subtitle: "Last changed 3 months ago",
-                    icon: Icons.lock_outline,
-                    onTap: () {
-                      CustomSnackbar.show(context: context, message: "Navigate to Password Change");
-                    },
-                  ),
-                  _buildDivider(),
-                  SettingsTile(
-                    title: "Google Connected",
-                    icon: Icons.g_mobiledata,
-                    trailing: Switch(
-                      value: _isGoogleConnected,
-                      activeColor: AppColors.primary,
-                      onChanged: (val) {
-                        setState(() {
-                          _isGoogleConnected = val;
-                        });
-                        CustomSnackbar.show(context: context, message: val ? "Google account linked" : "Google account unlinked");
-                      },
+
+                  // Hide Password Change if logged in exclusively with Google
+                  if (!(profile?.isGoogleAuth ?? false)) ...[
+                    _buildDivider(),
+                    SettingsTile(
+                      title: "Change Password",
+                      subtitle: "Update your security credentials",
+                      icon: Icons.lock_outline,
+                      onTap: () => context.push('/profile/change-password'),
                     ),
-                  ),
+                  ],
+
+                  // Conditional Google Connected Toggle
+                  if (profile?.isGoogleAuth == true) ...[
+                    _buildDivider(),
+                    SettingsTile(
+                      title: "Google Connected",
+                      icon: Icons.g_mobiledata,
+                      trailing: Switch(
+                        value: true,
+                        onChanged: null,
+                        activeColor: AppColors.primary,
+                        activeTrackColor: AppColors.primary.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -97,7 +122,14 @@ class _SecurityScreenState extends State<SecurityScreen> {
             // Security Section
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.0),
-              child: Text("Advanced Security", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text(
+                "Advanced Security",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             Container(
@@ -114,13 +146,34 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     subtitle: "Secure your account with 2FA",
                     icon: Icons.security,
                     trailing: Switch(
-                      value: _is2FAEnabled,
+                      value: profile?.is2faEnabled ?? false,
                       activeColor: AppColors.primary,
-                      onChanged: (val) {
-                        setState(() {
-                          _is2FAEnabled = val;
-                        });
-                        CustomSnackbar.show(context: context, message: val ? "2FA Enabled" : "2FA Disabled");
+                      activeTrackColor: AppColors.primary.withOpacity(0.5),
+                      inactiveThumbColor: AppColors.textGrey,
+                      inactiveTrackColor: AppColors.background,
+                      onChanged: (val) async {
+                        final success = await ref
+                            .read(profileControllerProvider.notifier)
+                            .toggle2FA(val);
+                        if (mounted) {
+                          if (success) {
+                            CustomSnackbar.show(
+                              context: context,
+                              message: val
+                                  ? "2FA Enabled successfully"
+                                  : "2FA Disabled successfully",
+                            );
+                          } else {
+                            final error = ref
+                                .read(profileControllerProvider)
+                                .error;
+                            CustomSnackbar.show(
+                              context: context,
+                              message: error ?? "Failed to update 2FA",
+                              isError: true,
+                            );
+                          }
+                        }
                       },
                     ),
                   ),
@@ -129,18 +182,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     title: "Active Sessions",
                     subtitle: "Manage devices logged into your account",
                     icon: Icons.devices,
-                    onTap: () {
-                      CustomSnackbar.show(context: context, message: "Navigate to Active Sessions");
-                    },
-                  ),
-                  _buildDivider(),
-                  SettingsTile(
-                    title: "Login History",
-                    subtitle: "Review your recent sign-ins",
-                    icon: Icons.history,
-                    onTap: () {
-                      CustomSnackbar.show(context: context, message: "Navigate to Login History");
-                    },
+                    onTap: () => context.push('/profile/sessions'),
                   ),
                 ],
               ),

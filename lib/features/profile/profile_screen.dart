@@ -1,20 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/profile_menu_tile.dart';
+import '../../shared/dialogs/custom_snackbar.dart';
+import '../auth/auth_provider.dart';
+import 'profile_provider.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
+  void _handleLogout(BuildContext context, WidgetRef ref) async {
+    CustomSnackbar.show(context: context, message: "Logging out...");
+
+    await ref.read(authControllerProvider.notifier).logout();
+
+    ref.read(profileControllerProvider.notifier).clearProfile();
+
+    if (context.mounted) {
+      context.go('/auth/login');
+    }
+  }
+
+  // Byte formatter
+  String _formatBytes(int bytes) {
+    if (bytes <= 0) return "0 MB";
+    const int kb = 1024;
+    const int mb = kb * 1024;
+    const int gb = mb * 1024;
+
+    if (bytes >= gb) {
+      return "${(bytes / gb).toStringAsFixed(1)} GB";
+    } else {
+      return "${(bytes / mb).toStringAsFixed(1)} MB";
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileState = ref.watch(profileControllerProvider);
+    final user = profileState.profile;
+
     return SafeArea(
       child: SingleChildScrollView(
         child: Column(
           children: [
             const SizedBox(height: 32),
 
-            // 1. User Information Area
+            // User Information
             Center(
               child: Column(
                 children: [
@@ -24,30 +57,48 @@ class ProfileScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.primary, width: 2),
                     ),
-                    child: const CircleAvatar(
+                    child: CircleAvatar(
                       radius: 50,
                       backgroundColor: AppColors.cards,
-                      child: Icon(
-                        Icons.person,
-                        size: 50,
-                        color: AppColors.primary,
-                      ),
+                      backgroundImage: user?.profilePicture != null
+                          ? NetworkImage(user!.profilePicture!)
+                          : null,
+                      child: user?.profilePicture == null
+                          ? const Icon(
+                              Icons.person,
+                              size: 50,
+                              color: AppColors.primary,
+                            )
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    "Md Mahfuz Alam Chowdhury",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+
+                  // Name
+                  profileState.isLoading && user == null
+                      ? const CircularProgressIndicator()
+                      : Text(
+                          user?.name ?? "Unknown User",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                  const SizedBox(height: 4),
+
+                  // Bio
+                  Text(
+                    user != null && user.bio.isNotEmpty
+                        ? user.bio
+                        : "No bio added yet",
+                    style: const TextStyle(
+                      color: AppColors.textGrey,
+                      fontSize: 14,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "hello@meetsfixer.com",
-                    style: TextStyle(color: AppColors.textGrey, fontSize: 14),
-                  ),
+
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -72,22 +123,42 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            // 2. Stats Section
+            // Stats
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Row(
                 children: [
-                  Expanded(child: _buildStatCard("Projects", "12")),
+                  Expanded(
+                    child: _buildStatCard(
+                      "Projects",
+                      user?.totalProjects.toString() ?? "0",
+                    ),
+                  ),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildStatCard("Minutes", "124")),
+                  Expanded(
+                    child: _buildStatCard(
+                      "Minutes",
+                      user?.totalMinutesUsed
+                              .toStringAsFixed(1)
+                              .replaceAll(RegExp(r'\.0$'), '') ??
+                          "0",
+                    ),
+                  ),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildStatCard("Storage", "4.2 GB")),
+                  Expanded(
+                    child: _buildStatCard(
+                      "Storage",
+                      user != null
+                          ? _formatBytes(user.totalStorageUsed)
+                          : "0 MB",
+                    ),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 32),
 
-            // 3. Quick Access Menu
+            // Quick Access Menu
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 24),
               decoration: BoxDecoration(
@@ -105,28 +176,27 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   _buildDivider(),
                   ProfileMenuTile(
-                    title: "Security",
-                    icon: Icons.shield_outlined,
-                    onTap: () => context.push('/profile/security'),
+                    title: "Subscription",
+                    icon: Icons.star_outline,
+                    onTap: () => context.push('/subscription/billing'),
                   ),
-
                   _buildDivider(),
                   ProfileMenuTile(
-                    title: "Billing & Invoices",
-                    icon: Icons.receipt_long,
-                    onTap: () => context.push('/subscription/billing'),
+                    title: "Account Security",
+                    icon: Icons.shield_outlined,
+                    onTap: () => context.push('/profile/security'),
                   ),
                   _buildDivider(),
                   ProfileMenuTile(
                     title: "Settings",
                     icon: Icons.settings_outlined,
-                    onTap: () => context.push('/settings'), // Placeholder route
+                    onTap: () => context.push('/settings'),
                   ),
                   _buildDivider(),
                   ProfileMenuTile(
                     title: "Support",
                     icon: Icons.help_outline,
-                    onTap: () => context.push('/help'), // Placeholder route
+                    onTap: () => context.push('/help'),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -134,7 +204,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // 4. Logout Button (Separated for emphasis)
+            // Logout Button
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 24),
               decoration: BoxDecoration(
@@ -149,10 +219,7 @@ class ProfileScreen extends StatelessWidget {
                     title: "Logout",
                     icon: Icons.logout,
                     isDestructive: true,
-                    onTap: () {
-                      // Clears session and routes back to login
-                      context.go('/auth/login');
-                    },
+                    onTap: () => _handleLogout(context, ref),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -165,7 +232,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // Helper widget for the three stat boxes
   Widget _buildStatCard(String title, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -194,7 +260,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // Helper widget for subtle dividers between list items
   Widget _buildDivider() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),

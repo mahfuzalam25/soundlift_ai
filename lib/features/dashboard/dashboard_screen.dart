@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/action_card.dart';
 import '../../shared/widgets/project_list_tile.dart';
-import 'package:go_router/go_router.dart';
+import '../profile/profile_provider.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return "Good Morning,";
+    if (hour < 17) return "Good Afternoon,";
+    if (hour < 21) return "Good Evening,";
+    return "Good Night,";
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileState = ref.watch(profileControllerProvider);
+    final user = profileState.profile;
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -16,26 +28,34 @@ class DashboardScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Good Morning,",
-                      style: TextStyle(color: AppColors.textGrey, fontSize: 14),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      "Md Mahfuz Alam Chowdhury",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    Text(
+                      _getGreeting(),
+                      style: const TextStyle(
+                        color: AppColors.textGrey,
+                        fontSize: 14,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    profileState.isLoading && user == null
+                        ? Container(
+                            height: 20,
+                            width: 150,
+                            color: AppColors.cards,
+                          )
+                        : Text(
+                            user?.name ?? "Guest User",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ],
                 ),
                 // Notification Bell & Avatar
@@ -52,14 +72,19 @@ class DashboardScreen extends StatelessWidget {
                       onPressed: () => context.push('/notifications'),
                     ),
                     const SizedBox(width: 8),
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 20,
                       backgroundColor: AppColors.cards,
-                      child: Icon(
-                        Icons.person,
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
+                      backgroundImage: user?.profilePicture != null
+                          ? NetworkImage(user!.profilePicture!)
+                          : null,
+                      child: user?.profilePicture == null
+                          ? const Icon(
+                              Icons.person,
+                              color: AppColors.primary,
+                              size: 20,
+                            )
+                          : null,
                     ),
                   ],
                 ),

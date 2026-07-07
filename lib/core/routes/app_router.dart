@@ -21,6 +21,8 @@ import '../../features/profile/security_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/support/help_screen.dart';
 import '../../features/support/support_screen.dart';
+import '../../features/profile/change_password_screen.dart';
+import '../../features/profile/sessions_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -122,6 +124,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/support',
         builder: (context, state) => const SupportScreen(),
+      ),
+      GoRoute(
+        path: '/profile/change-password',
+        builder: (context, state) => const ChangePasswordScreen(),
+      ),
+      GoRoute(
+        path: '/profile/sessions',
+        builder: (context, state) => const SessionsScreen(),
       ),
     ],
   );
