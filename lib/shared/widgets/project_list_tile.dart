@@ -6,6 +6,7 @@ class ProjectListTile extends StatelessWidget {
   final String status;
   final String date;
   final IconData typeIcon;
+  final Widget? trailing;
 
   const ProjectListTile({
     super.key,
@@ -13,6 +14,7 @@ class ProjectListTile extends StatelessWidget {
     required this.status,
     required this.date,
     required this.typeIcon,
+    this.trailing,
   });
 
   @override
@@ -20,7 +22,6 @@ class ProjectListTile extends StatelessWidget {
     final bool isCompleted = status.toLowerCase() == 'completed';
     final bool isFailed = status.toLowerCase() == 'failed';
 
-    // Determine dynamic color based on status
     final Color statusColor = isCompleted
         ? AppColors.success
         : (isFailed ? Colors.redAccent : AppColors.primary);
@@ -84,6 +85,8 @@ class ProjectListTile extends StatelessWidget {
               ),
             ),
           ),
+
+          if (trailing != null) ...[const SizedBox(width: 12), trailing!],
         ],
       ),
     );

@@ -68,7 +68,7 @@ class SupportScreen extends StatelessWidget {
               title: "Live Chat",
               subtitle: "Typical reply: under 5 mins",
               icon: Icons.chat_bubble_outline,
-              isPrimary: true, // Highlights this as the recommended option
+              isPrimary: true,
               onTap: () {
                 CustomSnackbar.show(
                   context: context,
@@ -82,10 +82,7 @@ class SupportScreen extends StatelessWidget {
               subtitle: "Typical reply: within 24 hours",
               icon: Icons.email_outlined,
               onTap: () {
-                CustomSnackbar.show(
-                  context: context,
-                  message: "Opening Mail Client...",
-                );
+                context.push('/support/contact');
               },
             ),
 
@@ -106,7 +103,6 @@ class SupportScreen extends StatelessWidget {
     );
   }
 
-  // Reusable local widget for the support option cards
   Widget _buildSupportMethodCard({
     required String title,
     required String subtitle,

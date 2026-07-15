@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // Added GoRouter for navigation
+import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/pricing_card.dart';
 import '../../shared/dialogs/custom_snackbar.dart';
@@ -13,7 +13,6 @@ class SubscriptionScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(24.0),
         children: [
-          // UPDATED: Wrapped header in a Row to add the Billing button
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -41,7 +40,7 @@ class SubscriptionScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Usage Card (Unchanged)
+          // Usage Card
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
@@ -170,7 +169,7 @@ class SubscriptionScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Pricing Cards (Unchanged)
+          // Pricing Cards
           PricingCard(
             title: "Pro",
             price: "\$19.99",

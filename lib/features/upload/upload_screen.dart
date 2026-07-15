@@ -1,58 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart' as fp;
 import '../../core/theme/app_colors.dart';
 import '../../shared/buttons/primary_button.dart';
 import '../../shared/widgets/upload_dropzone.dart';
 import '../../shared/dialogs/custom_snackbar.dart';
+import '../projects/providers/project_provider.dart';
 
-class UploadScreen extends StatefulWidget {
+class UploadScreen extends ConsumerStatefulWidget {
   final String type;
   const UploadScreen({super.key, required this.type});
 
   @override
-  State<UploadScreen> createState() => _UploadScreenState();
+  ConsumerState<UploadScreen> createState() => _UploadScreenState();
 }
 
-class _UploadScreenState extends State<UploadScreen> {
-  // FIXED: Added fp. prefix here
+class _UploadScreenState extends ConsumerState<UploadScreen> {
   fp.PlatformFile? _selectedFile;
+  final TextEditingController _nameController = TextEditingController();
+
+  List<String> get _allowedExtensions {
+    if (widget.type == 'audio_enhancement') return ['mp3', 'wav', 'm4a'];
+    if (widget.type == 'video_enhancement') return ['mp4', 'mov', 'avi', 'mkv'];
+    if (widget.type == 'audio_replace') return ['mp4', 'mov', 'avi', 'mkv'];
+    return ['mp3', 'wav', 'mp4', 'mov'];
+  }
 
   Future<void> _pickFile() async {
     try {
-      // FIXED: Removed '.platform' for version 11.0.2 compatibility
       fp.FilePickerResult? result = await fp.FilePicker.pickFiles(
         type: fp.FileType.custom,
-        allowedExtensions: ['mp3', 'wav', 'mp4', 'mov'],
+        allowedExtensions: _allowedExtensions,
       );
 
       if (result != null) {
         setState(() {
           _selectedFile = result.files.first;
+          if (_nameController.text.isEmpty) {
+            _nameController.text = _selectedFile!.name.split('.').first;
+          }
         });
-
-        if (mounted) {
-          CustomSnackbar.show(
-            context: context,
-            message: "File loaded: ${_selectedFile!.name}",
-          );
-        }
+        if (mounted) CustomSnackbar.show(context: context, message: "File loaded: ${_selectedFile!.name}");
       }
     } catch (e) {
-      if (mounted) {
-        CustomSnackbar.show(
-          context: context,
-          message: "Failed to pick file. Please try again.",
-          isError: true,
-        );
-      }
+      if (mounted) CustomSnackbar.show(context: context, message: "Failed to pick file.", isError: true);
     }
   }
 
   void _removeFile() {
-    setState(() {
-      _selectedFile = null;
-    });
+    setState(() => _selectedFile = null);
   }
 
   String _formatBytes(int bytes) {
@@ -62,8 +59,36 @@ class _UploadScreenState extends State<UploadScreen> {
     return "${(bytes / (1024 * i > 0 ? 1024 * i : 1)).toStringAsFixed(2)} ${suffixes[i]}";
   }
 
+  Future<void> _submitProject() async {
+    if (_nameController.text.isEmpty) {
+      CustomSnackbar.show(context: context, message: "Please enter a project name.", isError: true);
+      return;
+    }
+    if (_selectedFile == null) {
+      CustomSnackbar.show(context: context, message: "Please select a file first", isError: true);
+      return;
+    }
+
+    final projectId = await ref.read(projectControllerProvider.notifier).submitProject(
+      name: _nameController.text,
+      type: widget.type,
+      filePath: _selectedFile!.path!,
+    );
+
+    if (projectId != null && mounted) {
+      context.pushReplacement('/processing/$projectId');
+    } else {
+      final error = ref.read(projectControllerProvider).error;
+      if (mounted && error != null) {
+        CustomSnackbar.show(context: context, message: error, isError: true);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final projectState = ref.watch(projectControllerProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -71,82 +96,50 @@ class _UploadScreenState extends State<UploadScreen> {
         backgroundColor: AppColors.cards,
         elevation: 0,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Text(
-              "Upload your files",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+              "Project Details",
+              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            
+            TextField(
+              controller: _nameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: "Project Name",
+                labelStyle: const TextStyle(color: AppColors.textGrey),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.primary.withOpacity(0.5)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: AppColors.primary),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: AppColors.cards,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              "Fast and easy way",
-              style: TextStyle(color: AppColors.textGrey, fontSize: 16),
-            ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 24),
 
             if (_selectedFile == null)
               UploadDropzone(onTap: _pickFile)
             else
               _buildSelectedFileCard(),
 
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () {
-                    CustomSnackbar.show(
-                      context: context,
-                      message: "Audio recording coming soon",
-                    );
-                  },
-                  icon: const Icon(Icons.mic, color: Colors.white),
-                  label: const Text(
-                    "Record Audio",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
-                  ),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    CustomSnackbar.show(
-                      context: context,
-                      message: "Video recording coming soon",
-                    );
-                  },
-                  icon: const Icon(Icons.videocam, color: Colors.white),
-                  label: const Text(
-                    "Record Video",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
-                  ),
-                ),
-              ],
-            ),
+            const SizedBox(height: 40),
 
-            const Spacer(),
-
-            PrimaryButton(
-              text: "Submit for Processing",
-              onPressed: _selectedFile == null
-                  ? () => CustomSnackbar.show(
-                      context: context,
-                      message: "Please select a file first",
-                      isError: true,
-                    )
-                  : () => context.push('/processing/job-123'),
-            ),
+            projectState.isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : PrimaryButton(
+                    text: "Submit for Processing",
+                    onPressed: _submitProject,
+                  ),
           ],
         ),
       ),
@@ -164,20 +157,12 @@ class _UploadScreenState extends State<UploadScreen> {
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.insert_drive_file,
-            size: 48,
-            color: AppColors.accent,
-          ),
+          const Icon(Icons.insert_drive_file, size: 48, color: AppColors.accent),
           const SizedBox(height: 16),
           Text(
             _selectedFile!.name,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -189,15 +174,8 @@ class _UploadScreenState extends State<UploadScreen> {
           const SizedBox(height: 16),
           TextButton.icon(
             onPressed: _removeFile,
-            icon: const Icon(
-              Icons.delete_outline,
-              color: Colors.redAccent,
-              size: 20,
-            ),
-            label: const Text(
-              "Remove File",
-              style: TextStyle(color: Colors.redAccent),
-            ),
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+            label: const Text("Remove File", style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),

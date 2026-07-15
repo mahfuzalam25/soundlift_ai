@@ -37,7 +37,7 @@ class SettingDropdownTile extends StatelessWidget {
         value: currentValue,
         dropdownColor: AppColors.cards,
         borderRadius: BorderRadius.circular(12),
-        underline: const SizedBox(), // Removes the default underline for a cleaner look
+        underline: const SizedBox(),
         icon: const Icon(Icons.unfold_more, color: AppColors.textGrey, size: 20),
         style: const TextStyle(color: AppColors.accent, fontSize: 14, fontWeight: FontWeight.w600),
         items: options.map((String option) {

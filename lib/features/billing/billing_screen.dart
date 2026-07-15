@@ -90,7 +90,7 @@ class BillingScreen extends StatelessWidget {
             
             const SizedBox(height: 40),
             
-            // Billing History / Invoices
+            // Billing History
             const Text(
               "Billing History",
               style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
@@ -125,7 +125,6 @@ class BillingScreen extends StatelessWidget {
   }
 
   void _downloadInvoice(BuildContext context, String invoiceId) {
-    // This function acts as a placeholder for the future backend PDF generation/download API.
     CustomSnackbar.show(
       context: context, 
       message: "Downloading $invoiceId as PDF...",

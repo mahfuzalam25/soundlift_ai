@@ -16,7 +16,6 @@ class UploadDropzone extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(16),
-          // Using primary color for the border to make it look like a tap target
           border: Border.all(
             color: AppColors.primary.withOpacity(0.5),
             width: 2,
@@ -48,7 +47,7 @@ class UploadDropzone extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              "Supported: MP3, WAV, MP4, MOV", // More helpful text for mobile
+              "Supported: MP3, WAV, MP4, MOV",
               style: TextStyle(color: AppColors.textGrey, fontSize: 14),
             ),
           ],

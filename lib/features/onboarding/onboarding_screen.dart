@@ -49,7 +49,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Skip Button Area
             Align(
               alignment: Alignment.topRight,
               child: TextButton(
@@ -77,7 +76,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Icon/Image Placeholder matching the card theme
                         Container(
                           height: 240,
                           width: double.infinity,
@@ -153,7 +151,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ).copyWith(bottom: 24.0),
               child: Column(
                 children: [
-                  // Gradient Get Started / Next Button
                   Container(
                     width: double.infinity,
                     height: 56,

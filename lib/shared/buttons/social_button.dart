@@ -4,7 +4,7 @@ import '../../core/theme/app_colors.dart';
 class SocialButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
-  final IconData icon; // In a real app, use an SVG for the official Google logo
+  final IconData icon;
 
   const SocialButton({
     super.key,

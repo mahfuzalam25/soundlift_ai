@@ -8,7 +8,7 @@ import '../../shared/dialogs/custom_snackbar.dart';
 class ReferralScreen extends StatelessWidget {
   const ReferralScreen({super.key});
 
-  final String referralCode = "SOUNDLIFT-2026"; // Mock referral code
+  final String referralCode = "SOUNDLIFT-2026"; 
 
   @override
   Widget build(BuildContext context) {

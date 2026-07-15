@@ -7,7 +7,6 @@ class CustomSnackbar {
     required String message,
     bool isError = false,
   }) {
-    // Hide any currently showing snackbars
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     
     ScaffoldMessenger.of(context).showSnackBar(

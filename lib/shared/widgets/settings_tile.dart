@@ -5,7 +5,7 @@ class SettingsTile extends StatelessWidget {
   final String title;
   final String? subtitle;
   final IconData icon;
-  final Widget? trailing; // Allows us to pass a Switch, Badge, or Text
+  final Widget? trailing;
   final VoidCallback? onTap;
 
   const SettingsTile({

@@ -16,25 +16,22 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
-  // Add interceptor to attach JWT Token smartly
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
-        // 1. Define public endpoints that NEVER need an access token attached
         final publicEndpoints = [
           '/api/accounts/login/',
           '/api/accounts/register/',
           '/api/accounts/verify-otp/',
           '/api/accounts/verify-2fa/',
           '/api/accounts/google/',
+          '/api/accounts/token/refresh/',
         ];
 
-        // 2. Check if the current request is for a public endpoint
         final isPublicEndpoint = publicEndpoints.any(
           (endpoint) => options.path.contains(endpoint),
         );
 
-        // 3. Only attach the token if it is NOT a public endpoint
         if (!isPublicEndpoint) {
           final prefs = await SharedPreferences.getInstance();
           final token = prefs.getString('access_token');
@@ -46,10 +43,44 @@ final dioProvider = Provider<Dio>((ref) {
 
         return handler.next(options);
       },
+
+      onError: (DioException e, handler) async {
+        if (e.response?.statusCode == 401) {
+          final prefs = await SharedPreferences.getInstance();
+          final refreshToken = prefs.getString('refresh_token');
+
+          if (refreshToken != null) {
+            try {
+              final refreshDio = Dio(BaseOptions(baseUrl: dio.options.baseUrl));
+
+              final response = await refreshDio.post(
+                '/api/accounts/token/refresh/',
+                data: {'refresh': refreshToken},
+              );
+
+              final newAccessToken = response.data['access'];
+              final newRefreshToken = response.data['refresh'] ?? refreshToken;
+
+              await prefs.setString('access_token', newAccessToken);
+              await prefs.setString('refresh_token', newRefreshToken);
+
+              e.requestOptions.headers['Authorization'] =
+                  'Bearer $newAccessToken';
+
+              final retryResponse = await dio.fetch(e.requestOptions);
+              return handler.resolve(retryResponse);
+            } catch (refreshError) {
+              await prefs.remove('access_token');
+              await prefs.remove('refresh_token');
+            }
+          }
+        }
+
+        return handler.next(e);
+      },
     ),
   );
 
-  // Logs requests and responses to the console for easy debugging
   dio.interceptors.add(
     LogInterceptor(requestBody: true, responseBody: true, error: true),
   );

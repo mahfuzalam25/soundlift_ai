@@ -1,19 +1,26 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/project_list_tile.dart';
+import '../../shared/dialogs/custom_snackbar.dart';
+import 'providers/project_provider.dart';
 
-class ProjectsScreen extends StatefulWidget {
+class ProjectsScreen extends ConsumerStatefulWidget {
   const ProjectsScreen({super.key});
 
   @override
-  State<ProjectsScreen> createState() => _ProjectsScreenState();
+  ConsumerState<ProjectsScreen> createState() => _ProjectsScreenState();
 }
 
-class _ProjectsScreenState extends State<ProjectsScreen>
+class _ProjectsScreenState extends ConsumerState<ProjectsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _selectedFilter = 'All'; // Can be 'All', 'Audio', 'Video', or 'Date'
+  String _selectedFilter = 'All';
 
   @override
   void initState() {
@@ -27,8 +34,95 @@ class _ProjectsScreenState extends State<ProjectsScreen>
     super.dispose();
   }
 
+  String _formatDate(String isoDate) {
+    try {
+      final date = DateTime.parse(isoDate).toLocal();
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      final minuteStr = date.minute.toString().padLeft(2, '0');
+      final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
+      final ampm = date.hour >= 12 ? 'PM' : 'AM';
+      return "${months[date.month - 1]} ${date.day}, $hour:$minuteStr $ampm";
+    } catch (e) {
+      return "Unknown Date";
+    }
+  }
+
+  // DOWNLOAD LOGIC
+  Future<void> _handleDownload(
+    String projectId,
+    String projectName,
+    String format,
+  ) async {
+    try {
+      CustomSnackbar.show(context: context, message: "Starting download...");
+
+      final downloadUrl = await ref
+          .read(projectRepositoryProvider)
+          .getDownloadUrl(projectId);
+
+      Directory? directory;
+      if (Platform.isAndroid) {
+        directory = Directory('/storage/emulated/0/Download');
+        if (!await directory.exists()) {
+          directory = await getExternalStorageDirectory();
+        }
+      } else if (Platform.isIOS) {
+        directory = await getApplicationDocumentsDirectory();
+      }
+
+      if (directory == null) {
+        throw Exception("Could not access local storage.");
+      }
+
+      String safeProjectName = projectName.replaceAll(' ', '_');
+      String savePath =
+          "${directory.path}/${safeProjectName}_processed.$format";
+
+      final dio = Dio();
+      await dio.download(
+        downloadUrl,
+        savePath,
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            // int percentage = ((received / total) * 100).floor();
+          }
+        },
+      );
+
+      if (mounted) {
+        CustomSnackbar.show(
+          context: context,
+          message: "Saved successfully to your device:\n$savePath",
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackbar.show(
+          context: context,
+          message: "Failed to download file. Please check storage permissions.",
+          isError: true,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final asyncProjects = ref.watch(projectListProvider);
+
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,7 +139,6 @@ class _ProjectsScreenState extends State<ProjectsScreen>
             ),
           ),
 
-          // Search Bar
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.0),
             child: CustomTextField(
@@ -54,7 +147,6 @@ class _ProjectsScreenState extends State<ProjectsScreen>
             ),
           ),
 
-          // Filters Row
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 24.0,
@@ -68,14 +160,11 @@ class _ProjectsScreenState extends State<ProjectsScreen>
                   _buildFilterChip("Audio", Icons.multitrack_audio),
                   const SizedBox(width: 8),
                   _buildFilterChip("Video", Icons.video_file),
-                  const SizedBox(width: 8),
-                  _buildFilterChip("Date", Icons.calendar_today),
                 ],
               ),
             ),
           ),
 
-          // Custom Tab Bar
           Container(
             decoration: BoxDecoration(
               border: Border(
@@ -102,16 +191,28 @@ class _ProjectsScreenState extends State<ProjectsScreen>
             ),
           ),
 
-          // Tab Views
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildProjectList(filterStatus: 'All'),
-                _buildProjectList(filterStatus: 'Processing'),
-                _buildProjectList(filterStatus: 'Completed'),
-                _buildProjectList(filterStatus: 'Failed'),
-              ],
+            child: asyncProjects.when(
+              data: (projects) {
+                return TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildProjectList(projects, filterStatus: 'All'),
+                    _buildProjectList(projects, filterStatus: 'Processing'),
+                    _buildProjectList(projects, filterStatus: 'Completed'),
+                    _buildProjectList(projects, filterStatus: 'Failed'),
+                  ],
+                );
+              },
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              ),
+              error: (err, stack) => const Center(
+                child: Text(
+                  "Error fetching projects",
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+              ),
             ),
           ),
         ],
@@ -122,11 +223,7 @@ class _ProjectsScreenState extends State<ProjectsScreen>
   Widget _buildFilterChip(String label, IconData icon) {
     final bool isSelected = _selectedFilter == label;
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedFilter = label;
-        });
-      },
+      onTap: () => setState(() => _selectedFilter = label),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -163,44 +260,34 @@ class _ProjectsScreenState extends State<ProjectsScreen>
     );
   }
 
-  Widget _buildProjectList({required String filterStatus}) {
-    // Dummy dataset carefully constructed without any sensitive or excluded parameters
-    final List<Map<String, dynamic>> allProjects = [
-      {
-        "name": "Corporate_Presentation_Audio.wav",
-        "status": "Completed",
-        "date": "Today, 10:30 AM",
-        "type": Icons.audio_file,
-      },
-      {
-        "name": "Vlog_Travel_Draft.mp4",
-        "status": "Processing",
-        "date": "Today, 09:15 AM",
-        "type": Icons.video_file,
-      },
-      {
-        "name": "Podcast_Ep5_Raw.mp3",
-        "status": "Failed",
-        "date": "Yesterday, 04:15 PM",
-        "type": Icons.audio_file,
-      },
-      {
-        "name": "Client_Interview_Backup.mp4",
-        "status": "Completed",
-        "date": "Oct 12, 09:00 AM",
-        "type": Icons.video_file,
-      },
-      {
-        "name": "Voiceover_Commercial.wav",
-        "status": "Completed",
-        "date": "Oct 10, 11:20 AM",
-        "type": Icons.audio_file,
-      },
-    ];
+  Widget _buildProjectList(
+    List<dynamic> allProjects, {
+    required String filterStatus,
+  }) {
+    final filteredList = allProjects.where((p) {
+      final status = p['status'].toString().toLowerCase();
+      bool matchesTab = false;
 
-    final filteredList = filterStatus == 'All'
-        ? allProjects
-        : allProjects.where((p) => p['status'] == filterStatus).toList();
+      if (filterStatus == 'All') {
+        matchesTab = true;
+      } else if (filterStatus == 'Processing') {
+        matchesTab = (status == 'processing' || status == 'queued');
+      } else {
+        matchesTab = (status == filterStatus.toLowerCase());
+      }
+
+      bool matchesChip = true;
+      final format = p['media_file']?['format']?.toString().toLowerCase() ?? '';
+      final videoFormats = ['mp4', 'mov', 'avi', 'mkv'];
+
+      if (_selectedFilter == 'Audio') {
+        matchesChip = !videoFormats.contains(format);
+      } else if (_selectedFilter == 'Video') {
+        matchesChip = videoFormats.contains(format);
+      }
+
+      return matchesTab && matchesChip;
+    }).toList();
 
     if (filteredList.isEmpty) {
       return Center(
@@ -222,18 +309,66 @@ class _ProjectsScreenState extends State<ProjectsScreen>
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(24.0),
-      itemCount: filteredList.length,
-      itemBuilder: (context, index) {
-        final project = filteredList[index];
-        return ProjectListTile(
-          projectName: project['name'],
-          status: project['status'],
-          date: project['date'],
-          typeIcon: project['type'],
-        );
+    return RefreshIndicator(
+      color: AppColors.primary,
+      backgroundColor: AppColors.cards,
+      onRefresh: () async {
+        ref.invalidate(projectListProvider);
       },
+      child: ListView.builder(
+        padding: const EdgeInsets.all(24.0),
+        itemCount: filteredList.length,
+        itemBuilder: (context, index) {
+          final project = filteredList[index];
+
+          final isCompleted = project['status'] == 'completed';
+          final format =
+              project['media_file']?['format']?.toString().toLowerCase() ??
+              'mp4';
+          final projectName = project['project_name'];
+          final typeIcon = ['mp4', 'mov', 'avi', 'mkv'].contains(format)
+              ? Icons.video_file
+              : Icons.audio_file;
+
+          String displayStatus = project['status'].toString();
+          displayStatus =
+              displayStatus[0].toUpperCase() + displayStatus.substring(1);
+
+          return GestureDetector(
+            onTap: () {
+              if (isCompleted) {
+                context.push('/project/${project['id']}');
+              } else {
+                CustomSnackbar.show(
+                  context: context,
+                  message:
+                      "Media viewer is only available for completed projects.",
+                );
+              }
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ProjectListTile(
+                projectName: projectName,
+                status: displayStatus,
+                date: _formatDate(project['created_at']),
+                typeIcon: typeIcon,
+                trailing: isCompleted
+                    ? IconButton(
+                        icon: const Icon(
+                          Icons.download,
+                          color: AppColors.primary,
+                        ),
+                        onPressed: () =>
+                            _handleDownload(project['id'], projectName, format),
+                        tooltip: "Download Processed File",
+                      )
+                    : null,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

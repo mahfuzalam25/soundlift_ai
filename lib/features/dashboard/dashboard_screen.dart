@@ -5,6 +5,8 @@ import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/action_card.dart';
 import '../../shared/widgets/project_list_tile.dart';
 import '../profile/profile_provider.dart';
+import '../notifications/notifications_provider.dart';
+import '../projects/providers/project_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -17,10 +19,44 @@ class DashboardScreen extends ConsumerWidget {
     return "Good Night,";
   }
 
+  String _formatDate(String? isoDate) {
+    if (isoDate == null) return "Unknown date";
+    try {
+      final date = DateTime.parse(isoDate).toLocal();
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      final month = months[date.month - 1];
+      final day = date.day.toString().padLeft(2, '0');
+      int hour = date.hour;
+      final minute = date.minute.toString().padLeft(2, '0');
+      final ampm = hour >= 12 ? 'PM' : 'AM';
+      if (hour == 0) hour = 12;
+      if (hour > 12) hour -= 12;
+      return "$month $day, $hour:$minute $ampm";
+    } catch (e) {
+      return "Unknown date";
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileState = ref.watch(profileControllerProvider);
     final user = profileState.profile;
+
+    final projectListAsync = ref.watch(projectListProvider);
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -61,15 +97,23 @@ class DashboardScreen extends ConsumerWidget {
                 // Notification Bell & Avatar
                 Row(
                   children: [
-                    IconButton(
-                      icon: const Badge(
-                        backgroundColor: AppColors.accent,
-                        child: Icon(
-                          Icons.notifications_none,
-                          color: Colors.white,
-                        ),
-                      ),
-                      onPressed: () => context.push('/notifications'),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final unreadCount = ref
+                            .watch(notificationsControllerProvider)
+                            .unreadCount;
+                        return IconButton(
+                          icon: Badge(
+                            isLabelVisible: unreadCount > 0,
+                            backgroundColor: AppColors.accent,
+                            child: const Icon(
+                              Icons.notifications_none,
+                              color: Colors.white,
+                            ),
+                          ),
+                          onPressed: () => context.push('/notifications'),
+                        );
+                      },
                     ),
                     const SizedBox(width: 8),
                     CircleAvatar(
@@ -184,66 +228,98 @@ class DashboardScreen extends ConsumerWidget {
                 ActionCard(
                   title: "Enhance\nAudio",
                   icon: Icons.multitrack_audio,
-                  onTap: () {},
+                  onTap: () => context.push('/upload?type=audio_enhancement'),
                 ),
                 ActionCard(
                   title: "Enhance\nVideo",
                   icon: Icons.video_settings,
-                  onTap: () {},
+                  onTap: () => context.push('/upload?type=video_enhancement'),
                 ),
                 ActionCard(
                   title: "Replace\nAudio",
                   icon: Icons.mic_external_on,
-                  onTap: () {},
-                ),
-                ActionCard(
-                  title: "View\nProjects",
-                  icon: Icons.folder_special,
-                  onTap: () {},
+                  onTap: () => context.push('/upload/replace-audio'),
                 ),
               ],
             ),
             const SizedBox(height: 32),
 
-            // Recent Projects
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Recent Projects",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {}, // Will link to Projects tab
-                  child: const Text(
-                    "See All",
-                    style: TextStyle(color: AppColors.primary),
-                  ),
-                ),
-              ],
+            // Recent Projects Header
+            const Text(
+              "Recent Projects",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
-            const ProjectListTile(
-              projectName: "Podcast_Ep4_Raw.wav",
-              status: "Processing",
-              date: "Today, 10:30 AM",
-              typeIcon: Icons.audio_file,
-            ),
-            const ProjectListTile(
-              projectName: "Vlog_Windy_Day.mp4",
-              status: "Completed",
-              date: "Yesterday, 04:15 PM",
-              typeIcon: Icons.video_file,
-            ),
-            const ProjectListTile(
-              projectName: "Interview_Backup.mp3",
-              status: "Completed",
-              date: "Oct 12, 09:00 AM",
-              typeIcon: Icons.audio_file,
+
+            // Dynamic Recent Projects List
+            projectListAsync.when(
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24.0),
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+              ),
+              error: (err, stack) => Center(
+                child: Text(
+                  "Error: $err",
+                  style: const TextStyle(color: Colors.redAccent),
+                ),
+              ),
+              data: (projects) {
+                final recentCompleted = projects
+                    .where((p) => p['status'] == 'completed')
+                    .take(5)
+                    .toList();
+
+                if (recentCompleted.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.0),
+                    child: Text(
+                      "No recent completed projects.",
+                      style: TextStyle(color: AppColors.textGrey),
+                    ),
+                  );
+                }
+
+                return Column(
+                  children: recentCompleted.map((project) {
+                    final format =
+                        project['media_file']?['format']
+                            ?.toString()
+                            .toLowerCase() ??
+                        'mp4';
+                    final isVideo = [
+                      'mp4',
+                      'mov',
+                      'avi',
+                      'mkv',
+                    ].contains(format);
+                    final projectName =
+                        project['project_name'] ?? 'Untitled Project';
+
+                    return GestureDetector(
+                      onTap: () {
+                        context.push('/project/${project['id']}');
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: ProjectListTile(
+                          projectName: projectName,
+                          status: "Completed",
+                          date: _formatDate(project['created_at']),
+                          typeIcon: isVideo
+                              ? Icons.video_file
+                              : Icons.audio_file,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
             ),
           ],
         ),

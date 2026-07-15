@@ -82,7 +82,7 @@ class PricingCard extends StatelessWidget {
           const SizedBox(height: 24),
           PrimaryButton(
             text: isCurrentPlan ? "Current Plan" : "Get Started",
-            isGradient: !isCurrentPlan, // Solid color for current, gradient for upgrades
+            isGradient: !isCurrentPlan,
             onPressed: isCurrentPlan ? () {} : onAction,
           ),
           const SizedBox(height: 24),

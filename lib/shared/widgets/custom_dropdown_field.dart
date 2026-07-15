@@ -21,7 +21,7 @@ class CustomDropdownField extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 16.0),
       child: DropdownButtonFormField<String>(
         value: value,
-        dropdownColor: AppColors.cards, // Matches your card theme
+        dropdownColor: AppColors.cards,
         icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textGrey),
         style: const TextStyle(color: Colors.white, fontSize: 16),
         decoration: InputDecoration(

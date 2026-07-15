@@ -23,6 +23,13 @@ import '../../features/support/help_screen.dart';
 import '../../features/support/support_screen.dart';
 import '../../features/profile/change_password_screen.dart';
 import '../../features/profile/sessions_screen.dart';
+import '../../features/support/faq_screen.dart';
+import '../../features/support/tutorials_screen.dart';
+import '../../features/support/docs_screen.dart';
+import '../../features/support/contact_support_screen.dart';
+import '../../features/support/tutorial_player_screen.dart';
+import '../../features/projects/media_viewer_screen.dart';
+import '../../features/upload/replace_audio_upload_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -33,10 +40,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/intro',
         builder: (context, state) => const OnboardingScreen(),
       ),
-      // Auth Flow
       GoRoute(
         path: '/auth',
-        redirect: (context, state) => '/auth/login', // Redirect base auth route
+        redirect: (context, state) => '/auth/login',
       ),
       GoRoute(
         path: '/auth/login',
@@ -53,7 +59,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auth/verify',
         builder: (context, state) {
-          // Read the flow type from query parameters (e.g., ?flow=reset)
           final flowType = state.uri.queryParameters['flow'] ?? 'register';
           return OtpVerifyScreen(flow: flowType);
         },
@@ -63,10 +68,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const NewPasswordScreen(),
       ),
 
-      // Dashboard Placeholder (for testing post-login navigation)
       GoRoute(
         path: '/dashboard',
         builder: (context, state) => const MainLayout(),
+      ),
+      GoRoute(
+        path: '/upload/replace-audio',
+        builder: (context, state) => const ReplaceAudioUploadScreen(),
       ),
       GoRoute(
         path: '/upload',
@@ -83,18 +91,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/editor/video/:id',
+        path: '/editor/video',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-          return VideoEditorScreen(projectId: id);
+          final data = state.extra as Map<String, dynamic>;
+          return VideoEditorScreen(
+            projectName: data['projectName'],
+            videos: List<Map<String, dynamic>>.from(data['videos']),
+            audios: List<Map<String, dynamic>>.from(data['audios']),
+          );
         },
-      ),
-      // Future Project Details Route
-      GoRoute(
-        path: '/project/:id',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text("Project Details placeholder")),
-        ),
       ),
       GoRoute(
         path: '/notifications',
@@ -132,6 +137,37 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/sessions',
         builder: (context, state) => const SessionsScreen(),
+      ),
+
+      GoRoute(
+        path: '/help/faq',
+        builder: (context, state) => const FaqScreen(),
+      ),
+      GoRoute(
+        path: '/help/tutorials',
+        builder: (context, state) => const TutorialsScreen(),
+      ),
+      GoRoute(
+        path: '/help/docs',
+        builder: (context, state) => const DocsScreen(),
+      ),
+      GoRoute(
+        path: '/support/contact',
+        builder: (context, state) => const ContactSupportScreen(),
+      ),
+      GoRoute(
+        path: '/help/tutorials/player/:videoId',
+        builder: (context, state) {
+          final videoId = state.pathParameters['videoId']!;
+          return TutorialPlayerScreen(videoId: videoId);
+        },
+      ),
+      GoRoute(
+        path: '/project/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return MediaViewerScreen(projectId: id);
+        },
       ),
     ],
   );

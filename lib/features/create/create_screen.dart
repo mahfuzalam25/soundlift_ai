@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/action_card.dart';
-import '../../shared/dialogs/custom_snackbar.dart'; // Import our new utility
+import '../../shared/dialogs/custom_snackbar.dart';
 
 class CreateScreen extends StatelessWidget {
   const CreateScreen({super.key});
@@ -40,17 +40,18 @@ class CreateScreen extends StatelessWidget {
                 ActionCard(
                   title: "Audio\nEnhancement",
                   icon: Icons.multitrack_audio,
-                  onTap: () => context.push('/upload?type=audio-enhance'),
+                  onTap: () => context.push('/upload?type=audio_enhancement'),
                 ),
                 ActionCard(
                   title: "Video\nEnhancement",
                   icon: Icons.video_settings,
-                  onTap: () => context.push('/upload?type=video-enhance'),
+                  onTap: () => context.push('/upload?type=video_enhancement'),
                 ),
                 ActionCard(
-                  title: "Replace Video\nAudio",
+                  title: "Replace\nAudio",
                   icon: Icons.mic_external_on,
-                  onTap: () => context.push('/upload?type=audio-replace'),
+                  onTap: () =>
+                      context.push('/upload/replace-audio'),
                 ),
                 Opacity(
                   opacity: 0.5,
@@ -58,7 +59,6 @@ class CreateScreen extends StatelessWidget {
                     title: "AI Subtitles\n(Coming Soon)",
                     icon: Icons.subtitles,
                     onTap: () {
-                      // Using our new CustomSnackbar
                       CustomSnackbar.show(
                         context: context,
                         message: 'AI Subtitles are coming in a future update!',

@@ -72,32 +72,17 @@ class HelpScreen extends StatelessWidget {
                 ActionCard(
                   title: "FAQ",
                   icon: Icons.question_answer_outlined,
-                  onTap: () {
-                    CustomSnackbar.show(
-                      context: context,
-                      message: "Opening FAQ...",
-                    );
-                  },
+                  onTap: () => context.push('/help/faq'),
                 ),
                 ActionCard(
                   title: "Tutorials",
                   icon: Icons.play_circle_outline,
-                  onTap: () {
-                    CustomSnackbar.show(
-                      context: context,
-                      message: "Opening Tutorials...",
-                    );
-                  },
+                  onTap: () => context.push('/help/tutorials'),
                 ),
                 ActionCard(
                   title: "Documentation",
                   icon: Icons.library_books_outlined,
-                  onTap: () {
-                    CustomSnackbar.show(
-                      context: context,
-                      message: "Opening Documentation...",
-                    );
-                  },
+                  onTap: () => context.push('/help/docs'),
                 ),
               ],
             ),

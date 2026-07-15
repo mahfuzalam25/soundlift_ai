@@ -5,7 +5,7 @@ class ProfileMenuTile extends StatelessWidget {
   final String title;
   final IconData icon;
   final VoidCallback onTap;
-  final bool isDestructive; // Useful for the Logout button
+  final bool isDestructive;
 
   const ProfileMenuTile({
     super.key,

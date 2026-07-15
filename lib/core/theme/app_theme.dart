@@ -13,7 +13,7 @@ class AppTheme {
         background: AppColors.background,
         error: Colors.redAccent,
       ),
-      fontFamily: 'Inter', // Or your preferred font
+      fontFamily: 'Inter',
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
