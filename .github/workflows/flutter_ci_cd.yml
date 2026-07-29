@@ -27,7 +27,7 @@ jobs:
 
       - name: Verify Formatting & Analyze
         run: |
-          flutter format --set-exit-if-changed .
+          dart format --set-exit-if-changed .
           flutter analyze
 
       - name: Run Unit Tests
