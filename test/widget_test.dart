@@ -4,8 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:dio/dio.dart'; // NEW
-import 'package:soundlift_ai/core/network/api_client.dart'; // NEW
+import 'package:dio/dio.dart';
+import 'package:soundlift_ai/core/network/api_client.dart';
 import 'package:soundlift_ai/features/onboarding/onboarding_screen.dart';
 import 'package:soundlift_ai/features/splash/splash_screen.dart';
 import 'package:soundlift_ai/features/auth/login_screen.dart';
@@ -15,6 +15,7 @@ import 'package:soundlift_ai/features/auth/forgot_password_screen.dart';
 import 'package:soundlift_ai/features/auth/new_password_screen.dart';
 import 'package:soundlift_ai/features/dashboard/dashboard_screen.dart';
 import 'package:soundlift_ai/features/dashboard/main_layout.dart';
+import 'package:soundlift_ai/features/create/create_screen.dart'; // NEW: Imported CreateScreen
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -146,7 +147,7 @@ Widget createRouterTestApp({
     ],
   );
 
-  // NEW: Override the API client provider to use our Mock Dio instance
+  // Override the API client provider to use our Mock Dio instance
   return ProviderScope(
     overrides: [dioProvider.overrideWithValue(mockDio)],
     child: MaterialApp.router(routerConfig: router),
@@ -493,6 +494,53 @@ ADMOB_INTERSTITIAL_IOS=test_id
         find.byType(BottomNavigationBar),
       );
       expect(bottomNavBar.currentIndex, 1);
+    });
+  });
+
+  // NEW: CreateScreen Widget Tests
+  group('CreateScreen Widget Tests', () {
+    testWidgets('Renders CreateScreen UI elements correctly', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createRouterTestApp(child: const CreateScreen()));
+      await tester.pumpAndSettle();
+
+      expect(find.text("Create New Project"), findsOneWidget);
+      expect(
+        find.text("Choose the type of enhancement you need."),
+        findsOneWidget,
+      );
+      expect(find.text("Audio\nEnhancement"), findsOneWidget);
+      expect(find.text("Video\nEnhancement"), findsOneWidget);
+      expect(find.text("Replace\nAudio"), findsOneWidget);
+      expect(find.text("AI Subtitles\n(Coming Soon)"), findsOneWidget);
+    });
+
+    testWidgets('Tapping Audio Enhancement navigates to upload route', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createRouterTestApp(child: const CreateScreen()));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text("Audio\nEnhancement"));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Upload Destination Screen'), findsOneWidget);
+    });
+
+    testWidgets('Tapping AI Subtitles shows coming soon Snackbar', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createRouterTestApp(child: const CreateScreen()));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text("AI Subtitles\n(Coming Soon)"));
+      await tester.pump(); // Pump just once to trigger the Snackbar frame
+
+      expect(
+        find.text('AI Subtitles are coming in a future update!'),
+        findsOneWidget,
+      );
     });
   });
 }
