@@ -25,8 +25,10 @@ class NotificationsScreen extends ConsumerWidget {
 
   NotificationType _getNotificationType(String title, String message) {
     final combined = '$title $message'.toLowerCase();
-    if (combined.contains('failed') || combined.contains('error')) return NotificationType.warning;
-    if (combined.contains('success') || combined.contains('completed')) return NotificationType.success;
+    if (combined.contains('failed') || combined.contains('error'))
+      return NotificationType.warning;
+    if (combined.contains('success') || combined.contains('completed'))
+      return NotificationType.success;
     return NotificationType.info;
   }
 
@@ -45,15 +47,24 @@ class NotificationsScreen extends ConsumerWidget {
         ),
         title: const Text(
           "Notifications",
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           if (state.unreadCount > 0)
             TextButton(
               onPressed: () {
-                ref.read(notificationsControllerProvider.notifier).markAllAsRead();
+                ref
+                    .read(notificationsControllerProvider.notifier)
+                    .markAllAsRead();
               },
-              child: const Text("Mark all read", style: TextStyle(color: AppColors.primary)),
+              child: const Text(
+                "Mark all read",
+                style: TextStyle(color: AppColors.primary),
+              ),
             ),
         ],
       ),
@@ -62,10 +73,14 @@ class NotificationsScreen extends ConsumerWidget {
         color: AppColors.primary,
         backgroundColor: AppColors.cards,
         onRefresh: () async {
-          await ref.read(notificationsControllerProvider.notifier).loadNotifications(forceRefresh: true);
+          await ref
+              .read(notificationsControllerProvider.notifier)
+              .loadNotifications(forceRefresh: true);
         },
         child: state.isLoading && state.notifications.isEmpty
-            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            ? const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              )
             : ListView(
                 padding: const EdgeInsets.all(24.0),
                 children: [
@@ -73,7 +88,10 @@ class NotificationsScreen extends ConsumerWidget {
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.only(top: 100),
-                        child: Text("You have no notifications.", style: TextStyle(color: AppColors.textGrey)),
+                        child: Text(
+                          "You have no notifications.",
+                          style: TextStyle(color: AppColors.textGrey),
+                        ),
                       ),
                     ),
 
@@ -81,19 +99,27 @@ class NotificationsScreen extends ConsumerWidget {
                   if (state.unread.isNotEmpty) ...[
                     const Text(
                       "Recent",
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    ...state.unread.map((notif) => NotificationTile(
-                          title: notif.title,
-                          message: notif.message,
-                          time: _getTimeAgo(notif.createdAt),
-                          type: _getNotificationType(notif.title, notif.message),
-                          isUnread: true,
-                          onTap: () {
-                            ref.read(notificationsControllerProvider.notifier).markAsRead(notif.id);
-                          },
-                        )),
+                    ...state.unread.map(
+                      (notif) => NotificationTile(
+                        title: notif.title,
+                        message: notif.message,
+                        time: _getTimeAgo(notif.createdAt),
+                        type: _getNotificationType(notif.title, notif.message),
+                        isUnread: true,
+                        onTap: () {
+                          ref
+                              .read(notificationsControllerProvider.notifier)
+                              .markAsRead(notif.id);
+                        },
+                      ),
+                    ),
                     const SizedBox(height: 24),
                   ],
 
@@ -101,19 +127,25 @@ class NotificationsScreen extends ConsumerWidget {
                   if (state.read.isNotEmpty) ...[
                     const Text(
                       "Earlier",
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    ...state.read.map((notif) => NotificationTile(
-                          title: notif.title,
-                          message: notif.message,
-                          time: _getTimeAgo(notif.createdAt),
-                          type: _getNotificationType(notif.title, notif.message),
-                          isUnread: false,
-                          onTap: () {
-                            // Do nothing, already read
-                          },
-                        )),
+                    ...state.read.map(
+                      (notif) => NotificationTile(
+                        title: notif.title,
+                        message: notif.message,
+                        time: _getTimeAgo(notif.createdAt),
+                        type: _getNotificationType(notif.title, notif.message),
+                        isUnread: false,
+                        onTap: () {
+                          // Do nothing, already read
+                        },
+                      ),
+                    ),
                   ],
                 ],
               ),

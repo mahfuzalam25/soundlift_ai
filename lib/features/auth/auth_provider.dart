@@ -5,7 +5,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../core/network/api_client.dart';
 
-
 enum LoginResult { success, requires2FA, error }
 
 class AuthState {

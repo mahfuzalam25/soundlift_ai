@@ -31,7 +31,9 @@ class PricingCard extends StatelessWidget {
         color: AppColors.cards,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isPopular ? AppColors.primary : AppColors.textGrey.withOpacity(0.1),
+          color: isPopular
+              ? AppColors.primary
+              : AppColors.textGrey.withOpacity(0.1),
           width: isPopular ? 2 : 1,
         ),
         boxShadow: isPopular
@@ -40,7 +42,7 @@ class PricingCard extends StatelessWidget {
                   color: AppColors.primary.withOpacity(0.2),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
-                )
+                ),
               ]
             : [],
       ),
@@ -57,12 +59,20 @@ class PricingCard extends StatelessWidget {
               ),
               child: const Text(
                 "Most Popular",
-                style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           Text(
             title,
-            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -70,7 +80,11 @@ class PricingCard extends StatelessWidget {
             children: [
               Text(
                 price,
-                style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(width: 4),
               Text(
@@ -88,22 +102,32 @@ class PricingCard extends StatelessWidget {
           const SizedBox(height: 24),
           const Divider(color: Colors.white10),
           const SizedBox(height: 16),
-          ...features.map((feature) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.check_circle, color: AppColors.success, size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        feature,
-                        style: const TextStyle(color: AppColors.textGrey, fontSize: 14, height: 1.4),
+          ...features.map(
+            (feature) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.check_circle,
+                    color: AppColors.success,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: const TextStyle(
+                        color: AppColors.textGrey,
+                        fontSize: 14,
+                        height: 1.4,
                       ),
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -31,12 +31,25 @@ class SettingsTile extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       subtitle: subtitle != null
-          ? Text(subtitle!, style: const TextStyle(color: AppColors.textGrey, fontSize: 13))
+          ? Text(
+              subtitle!,
+              style: const TextStyle(color: AppColors.textGrey, fontSize: 13),
+            )
           : null,
-      trailing: trailing ?? const Icon(Icons.arrow_forward_ios, color: AppColors.textGrey, size: 16),
+      trailing:
+          trailing ??
+          const Icon(
+            Icons.arrow_forward_ios,
+            color: AppColors.textGrey,
+            size: 16,
+          ),
       onTap: onTap,
     );
   }

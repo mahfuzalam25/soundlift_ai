@@ -76,7 +76,8 @@ class BillingOverviewModel {
   factory BillingOverviewModel.fromJson(Map<String, dynamic> json) {
     return BillingOverviewModel(
       currentPlan: CurrentPlanModel.fromJson(json['current_plan'] ?? {}),
-      recentInvoices: (json['recent_invoices'] as List?)
+      recentInvoices:
+          (json['recent_invoices'] as List?)
               ?.map((i) => InvoiceModel.fromJson(i))
               .toList() ??
           [],
@@ -102,6 +103,6 @@ final billingRepositoryProvider = Provider(
 // --- PROVIDER ---
 final billingOverviewProvider =
     FutureProvider.autoDispose<BillingOverviewModel>((ref) async {
-  final repository = ref.watch(billingRepositoryProvider);
-  return await repository.getOverview();
-});
+      final repository = ref.watch(billingRepositoryProvider);
+      return await repository.getOverview();
+    });

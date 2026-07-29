@@ -56,7 +56,9 @@ class NotificationTile extends StatelessWidget {
           color: isUnread ? AppColors.cards : AppColors.background,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isUnread ? AppColors.primary.withOpacity(0.3) : AppColors.textGrey.withOpacity(0.1),
+            color: isUnread
+                ? AppColors.primary.withOpacity(0.3)
+                : AppColors.textGrey.withOpacity(0.1),
           ),
         ),
         child: Row(
@@ -83,14 +85,19 @@ class NotificationTile extends StatelessWidget {
                           title,
                           style: TextStyle(
                             color: Colors.white,
-                            fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
+                            fontWeight: isUnread
+                                ? FontWeight.bold
+                                : FontWeight.w600,
                             fontSize: 16,
                           ),
                         ),
                       ),
                       Text(
                         time,
-                        style: const TextStyle(color: AppColors.textGrey, fontSize: 12),
+                        style: const TextStyle(
+                          color: AppColors.textGrey,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),

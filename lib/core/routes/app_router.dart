@@ -43,10 +43,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/intro',
         builder: (context, state) => const OnboardingScreen(),
       ),
-      GoRoute(
-        path: '/auth',
-        redirect: (context, state) => '/auth/login',
-      ),
+      GoRoute(path: '/auth', redirect: (context, state) => '/auth/login'),
       GoRoute(
         path: '/auth/login',
         builder: (context, state) => const LoginScreen(),

@@ -20,14 +20,34 @@ class FaqScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
-        title: const Text("FAQ", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text(
+          "FAQ",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: faqsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (err, stack) => Center(child: Text("Error: $err", style: const TextStyle(color: Colors.redAccent))),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+        error: (err, stack) => Center(
+          child: Text(
+            "Error: $err",
+            style: const TextStyle(color: Colors.redAccent),
+          ),
+        ),
         data: (faqs) {
-          if (faqs.isEmpty) return const Center(child: Text("No FAQs available", style: TextStyle(color: AppColors.textGrey)));
-          
+          if (faqs.isEmpty)
+            return const Center(
+              child: Text(
+                "No FAQs available",
+                style: TextStyle(color: AppColors.textGrey),
+              ),
+            );
+
           return ListView.builder(
             padding: const EdgeInsets.all(24.0),
             itemCount: faqs.length,
@@ -38,21 +58,36 @@ class FaqScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: AppColors.cards,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.textGrey.withOpacity(0.1)),
+                  border: Border.all(
+                    color: AppColors.textGrey.withOpacity(0.1),
+                  ),
                 ),
                 child: Theme(
-                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  data: Theme.of(
+                    context,
+                  ).copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
                     iconColor: AppColors.primary,
                     collapsedIconColor: AppColors.textGrey,
                     title: Text(
                       faq.question,
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     children: [
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: Text(faq.answer, style: const TextStyle(color: AppColors.textGrey, fontSize: 14, height: 1.5)),
+                        child: Text(
+                          faq.answer,
+                          style: const TextStyle(
+                            color: AppColors.textGrey,
+                            fontSize: 14,
+                            height: 1.5,
+                          ),
+                        ),
                       ),
                     ],
                   ),

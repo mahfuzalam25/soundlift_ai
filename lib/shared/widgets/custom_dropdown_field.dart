@@ -29,7 +29,10 @@ class CustomDropdownField extends StatelessWidget {
           hintStyle: const TextStyle(color: AppColors.textGrey, fontSize: 14),
           filled: true,
           fillColor: AppColors.cards,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 18,
+          ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: AppColors.textGrey.withOpacity(0.2)),
@@ -40,10 +43,7 @@ class CustomDropdownField extends StatelessWidget {
           ),
         ),
         items: items.map((String item) {
-          return DropdownMenuItem<String>(
-            value: item,
-            child: Text(item),
-          );
+          return DropdownMenuItem<String>(value: item, child: Text(item));
         }).toList(),
         onChanged: onChanged,
       ),

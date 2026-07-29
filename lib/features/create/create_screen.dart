@@ -50,8 +50,7 @@ class CreateScreen extends StatelessWidget {
                 ActionCard(
                   title: "Replace\nAudio",
                   icon: Icons.mic_external_on,
-                  onTap: () =>
-                      context.push('/upload/replace-audio'),
+                  onTap: () => context.push('/upload/replace-audio'),
                 ),
                 Opacity(
                   opacity: 0.5,

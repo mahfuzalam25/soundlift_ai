@@ -34,11 +34,7 @@ Widget createRouterTestApp({
     ],
   );
 
-  return ProviderScope(
-    child: MaterialApp.router(
-      routerConfig: router,
-    ),
-  );
+  return ProviderScope(child: MaterialApp.router(routerConfig: router));
 }
 
 void main() {
@@ -50,9 +46,7 @@ void main() {
     ) async {
       SharedPreferences.setMockInitialValues({});
 
-      await tester.pumpWidget(
-        createRouterTestApp(child: const SplashScreen()),
-      );
+      await tester.pumpWidget(createRouterTestApp(child: const SplashScreen()));
 
       // Verify that SplashScreen and its fallback branding text are mounted
       expect(find.byType(SplashScreen), findsOneWidget);
@@ -64,9 +58,7 @@ void main() {
     ) async {
       SharedPreferences.setMockInitialValues({});
 
-      await tester.pumpWidget(
-        createRouterTestApp(child: const SplashScreen()),
-      );
+      await tester.pumpWidget(createRouterTestApp(child: const SplashScreen()));
 
       // Pump through fade animation (2s) and splash delay timer (3s)
       await tester.pump(const Duration(seconds: 2));

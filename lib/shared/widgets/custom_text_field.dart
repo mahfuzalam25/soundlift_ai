@@ -35,7 +35,10 @@ class CustomTextField extends StatelessWidget {
           fillColor: AppColors.cards,
           prefixIcon: prefixIcon,
           suffixIcon: suffixIcon,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 18,
+          ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: AppColors.textGrey.withOpacity(0.2)),

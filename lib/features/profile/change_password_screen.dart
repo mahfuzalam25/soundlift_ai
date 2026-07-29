@@ -11,7 +11,8 @@ class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  ConsumerState<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  ConsumerState<ChangePasswordScreen> createState() =>
+      _ChangePasswordScreenState();
 }
 
 class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
@@ -33,25 +34,40 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     final confirmPass = _confirmPasswordController.text;
 
     if (oldPass.isEmpty || newPass.isEmpty || confirmPass.isEmpty) {
-      CustomSnackbar.show(context: context, message: "Please fill in all fields", isError: true);
+      CustomSnackbar.show(
+        context: context,
+        message: "Please fill in all fields",
+        isError: true,
+      );
       return;
     }
 
     if (newPass != confirmPass) {
-      CustomSnackbar.show(context: context, message: "New passwords do not match", isError: true);
+      CustomSnackbar.show(
+        context: context,
+        message: "New passwords do not match",
+        isError: true,
+      );
       return;
     }
 
-    final success = await ref.read(changePasswordControllerProvider.notifier).changePassword(
-      oldPass, newPass, confirmPass
-    );
+    final success = await ref
+        .read(changePasswordControllerProvider.notifier)
+        .changePassword(oldPass, newPass, confirmPass);
 
     if (success && mounted) {
-      CustomSnackbar.show(context: context, message: "Password changed successfully!");
+      CustomSnackbar.show(
+        context: context,
+        message: "Password changed successfully!",
+      );
       context.pop();
     } else if (mounted) {
       final error = ref.read(changePasswordControllerProvider).error;
-      CustomSnackbar.show(context: context, message: error ?? "An error occurred", isError: true);
+      CustomSnackbar.show(
+        context: context,
+        message: error ?? "An error occurred",
+        isError: true,
+      );
     }
   }
 
@@ -70,7 +86,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         ),
         title: const Text(
           "Change Password",
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -80,7 +100,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           children: [
             const Text(
               "Update your password",
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -88,7 +112,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               style: TextStyle(color: AppColors.textGrey, fontSize: 14),
             ),
             const SizedBox(height: 32),
-            
+
             CustomTextField(
               hintText: "Current Password",
               controller: _oldPasswordController,

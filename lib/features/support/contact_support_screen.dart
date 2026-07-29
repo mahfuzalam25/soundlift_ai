@@ -11,7 +11,8 @@ class ContactSupportScreen extends ConsumerStatefulWidget {
   const ContactSupportScreen({super.key});
 
   @override
-  ConsumerState<ContactSupportScreen> createState() => _ContactSupportScreenState();
+  ConsumerState<ContactSupportScreen> createState() =>
+      _ContactSupportScreenState();
 }
 
 class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
@@ -30,20 +31,33 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
     final message = _messageController.text.trim();
 
     if (subject.isEmpty || message.isEmpty) {
-      CustomSnackbar.show(context: context, message: "Please fill out all fields", isError: true);
+      CustomSnackbar.show(
+        context: context,
+        message: "Please fill out all fields",
+        isError: true,
+      );
       return;
     }
 
-    final success = await ref.read(submitTicketControllerProvider.notifier).submit(subject, message);
+    final success = await ref
+        .read(submitTicketControllerProvider.notifier)
+        .submit(subject, message);
 
     if (success && mounted) {
-      CustomSnackbar.show(context: context, message: "Message sent successfully!");
+      CustomSnackbar.show(
+        context: context,
+        message: "Message sent successfully!",
+      );
       _subjectController.clear();
       _messageController.clear();
       ref.invalidate(ticketsProvider);
     } else if (mounted) {
       final error = ref.read(submitTicketControllerProvider).error;
-      CustomSnackbar.show(context: context, message: error ?? "Failed to send", isError: true);
+      CustomSnackbar.show(
+        context: context,
+        message: error ?? "Failed to send",
+        isError: true,
+      );
     }
   }
 
@@ -65,7 +79,14 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
-        title: const Text("Email Support", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Email Support",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: RefreshIndicator(
         color: AppColors.primary,
@@ -79,12 +100,25 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Submit Form
-              const Text("Send us a message", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                "Send us a message",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 8),
-              const Text("Describe your issue and our team will reply as soon as possible.", style: TextStyle(color: AppColors.textGrey, fontSize: 14)),
+              const Text(
+                "Describe your issue and our team will reply as soon as possible.",
+                style: TextStyle(color: AppColors.textGrey, fontSize: 14),
+              ),
               const SizedBox(height: 24),
 
-              CustomTextField(hintText: "Subject", controller: _subjectController),
+              CustomTextField(
+                hintText: "Subject",
+                controller: _subjectController,
+              ),
               CustomTextField(
                 hintText: "Describe your issue...",
                 controller: _messageController,
@@ -102,18 +136,35 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
               const SizedBox(height: 24),
 
               // Previous Tickets History
-              const Text("Your Messages", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                "Your Messages",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 16),
 
               ticketsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                error: (err, stack) => Center(child: Text("Error: $err", style: const TextStyle(color: Colors.redAccent))),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+                error: (err, stack) => Center(
+                  child: Text(
+                    "Error: $err",
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
+                ),
                 data: (tickets) {
                   if (tickets.isEmpty) {
                     return const Center(
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 32.0),
-                        child: Text("No previous messages.", style: TextStyle(color: AppColors.textGrey)),
+                        child: Text(
+                          "No previous messages.",
+                          style: TextStyle(color: AppColors.textGrey),
+                        ),
                       ),
                     );
                   }
@@ -130,7 +181,9 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.cards,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.textGrey.withOpacity(0.1)),
+                          border: Border.all(
+                            color: AppColors.textGrey.withOpacity(0.1),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,17 +191,33 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Expanded(child: Text(ticket.subject, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
+                                Expanded(
+                                  child: Text(
+                                    ticket.subject,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: ticket.isReplied ? AppColors.success.withOpacity(0.1) : Colors.orangeAccent.withOpacity(0.1),
+                                    color: ticket.isReplied
+                                        ? AppColors.success.withOpacity(0.1)
+                                        : Colors.orangeAccent.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
                                     ticket.isReplied ? "Replied" : "Pending",
                                     style: TextStyle(
-                                      color: ticket.isReplied ? AppColors.success : Colors.orangeAccent,
+                                      color: ticket.isReplied
+                                          ? AppColors.success
+                                          : Colors.orangeAccent,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -157,32 +226,66 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
                               ],
                             ),
                             const SizedBox(height: 4),
-                            Text(_formatDate(ticket.createdAt), style: const TextStyle(color: AppColors.textGrey, fontSize: 12)),
+                            Text(
+                              _formatDate(ticket.createdAt),
+                              style: const TextStyle(
+                                color: AppColors.textGrey,
+                                fontSize: 12,
+                              ),
+                            ),
                             const SizedBox(height: 12),
-                            Text(ticket.message, style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4)),
+                            Text(
+                              ticket.message,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                                height: 1.4,
+                              ),
+                            ),
 
                             // Admin Reply Box
-                            if (ticket.isReplied && ticket.adminReply != null) ...[
+                            if (ticket.isReplied &&
+                                ticket.adminReply != null) ...[
                               const SizedBox(height: 16),
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
                                   color: AppColors.primary.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                                  border: Border.all(
+                                    color: AppColors.primary.withOpacity(0.2),
+                                  ),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Row(
                                       children: [
-                                        Icon(Icons.support_agent, color: AppColors.primary, size: 16),
+                                        Icon(
+                                          Icons.support_agent,
+                                          color: AppColors.primary,
+                                          size: 16,
+                                        ),
                                         SizedBox(width: 8),
-                                        Text("Support Team", style: TextStyle(color: AppColors.primary, fontSize: 14, fontWeight: FontWeight.bold)),
+                                        Text(
+                                          "Support Team",
+                                          style: TextStyle(
+                                            color: AppColors.primary,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 8),
-                                    Text(ticket.adminReply!, style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4)),
+                                    Text(
+                                      ticket.adminReply!,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        height: 1.4,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),

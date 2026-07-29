@@ -6,22 +6,35 @@ import '../theme/app_colors.dart';
 
 class AdService {
   static String get bannerAdUnitId {
-    if (Platform.isAndroid) return dotenv.env['ADMOB_BANNER_ANDROID'] ?? 'ca-app-pub-3940256099942544/6300978111';
-    if (Platform.isIOS) return dotenv.env['ADMOB_BANNER_IOS'] ?? 'ca-app-pub-3940256099942544/2934735716';
+    if (Platform.isAndroid)
+      return dotenv.env['ADMOB_BANNER_ANDROID'] ??
+          'ca-app-pub-3940256099942544/6300978111';
+    if (Platform.isIOS)
+      return dotenv.env['ADMOB_BANNER_IOS'] ??
+          'ca-app-pub-3940256099942544/2934735716';
     return '';
   }
 
   static String get interstitialAdUnitId {
-    if (Platform.isAndroid) return dotenv.env['ADMOB_INTERSTITIAL_ANDROID'] ?? 'ca-app-pub-3940256099942544/1033173712';
-    if (Platform.isIOS) return dotenv.env['ADMOB_INTERSTITIAL_IOS'] ?? 'ca-app-pub-3940256099942544/4411468910';
+    if (Platform.isAndroid)
+      return dotenv.env['ADMOB_INTERSTITIAL_ANDROID'] ??
+          'ca-app-pub-3940256099942544/1033173712';
+    if (Platform.isIOS)
+      return dotenv.env['ADMOB_INTERSTITIAL_IOS'] ??
+          'ca-app-pub-3940256099942544/4411468910';
     return '';
   }
 
-  static void showInterstitialWithLoader(BuildContext context, {required VoidCallback onComplete}) {
+  static void showInterstitialWithLoader(
+    BuildContext context, {
+    required VoidCallback onComplete,
+  }) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
     );
 
     bool isResolved = false;
@@ -49,8 +62,8 @@ class AdService {
             },
           );
           if (!isResolved) {
-             isResolved = true;
-             Navigator.pop(context); 
+            isResolved = true;
+            Navigator.pop(context);
           }
           ad.show();
         },

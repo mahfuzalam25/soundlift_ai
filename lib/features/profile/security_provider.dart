@@ -33,25 +33,38 @@ class SecurityRepository {
   final Dio _dio;
   SecurityRepository(this._dio);
 
-  Future<void> changePassword(String oldPassword, String newPassword, String confirmNewPassword) async {
-    await _dio.post('/api/accounts/change-password/', data: {
-      "old_password": oldPassword,
-      "new_password": newPassword,
-      "confirm_new_password": confirmNewPassword,
-    });
+  Future<void> changePassword(
+    String oldPassword,
+    String newPassword,
+    String confirmNewPassword,
+  ) async {
+    await _dio.post(
+      '/api/accounts/change-password/',
+      data: {
+        "old_password": oldPassword,
+        "new_password": newPassword,
+        "confirm_new_password": confirmNewPassword,
+      },
+    );
   }
 
   Future<List<LoginSession>> fetchSessions() async {
     final response = await _dio.get('/api/accounts/sessions/');
-    return (response.data as List).map((x) => LoginSession.fromJson(x)).toList();
+    return (response.data as List)
+        .map((x) => LoginSession.fromJson(x))
+        .toList();
   }
 }
 
-final securityRepositoryProvider = Provider((ref) => SecurityRepository(ref.watch(dioProvider)));
+final securityRepositoryProvider = Provider(
+  (ref) => SecurityRepository(ref.watch(dioProvider)),
+);
 
 // Providers
 
-final sessionsProvider = FutureProvider.autoDispose<List<LoginSession>>((ref) async {
+final sessionsProvider = FutureProvider.autoDispose<List<LoginSession>>((
+  ref,
+) async {
   return ref.watch(securityRepositoryProvider).fetchSessions();
 });
 
@@ -66,7 +79,11 @@ class ChangePasswordController extends StateNotifier<ChangePasswordState> {
 
   ChangePasswordController(this._repository) : super(ChangePasswordState());
 
-  Future<bool> changePassword(String old, String newPass, String confirm) async {
+  Future<bool> changePassword(
+    String old,
+    String newPass,
+    String confirm,
+  ) async {
     state = ChangePasswordState(isLoading: true);
     try {
       await _repository.changePassword(old, newPass, confirm);
@@ -75,7 +92,10 @@ class ChangePasswordController extends StateNotifier<ChangePasswordState> {
     } catch (e) {
       String errorMessage = "Failed to change password";
       if (e is DioException) {
-        errorMessage = e.response?.data?['message'] ?? e.response?.data?['error'] ?? errorMessage;
+        errorMessage =
+            e.response?.data?['message'] ??
+            e.response?.data?['error'] ??
+            errorMessage;
       }
       state = ChangePasswordState(isLoading: false, error: errorMessage);
       return false;
@@ -83,6 +103,7 @@ class ChangePasswordController extends StateNotifier<ChangePasswordState> {
   }
 }
 
-final changePasswordControllerProvider = StateNotifierProvider<ChangePasswordController, ChangePasswordState>((ref) {
-  return ChangePasswordController(ref.watch(securityRepositoryProvider));
-});
+final changePasswordControllerProvider =
+    StateNotifierProvider<ChangePasswordController, ChangePasswordState>((ref) {
+      return ChangePasswordController(ref.watch(securityRepositoryProvider));
+    });

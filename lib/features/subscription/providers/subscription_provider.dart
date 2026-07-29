@@ -36,7 +36,8 @@ class UserSubscription {
       cancelAtPeriodEnd: json['cancel_at_period_end'] ?? false,
       daysUntilExpiry: json['days_until_expiry'] ?? 0,
       remainingMinutes: (json['remaining_minutes'] ?? 0.0).toDouble(),
-      totalAllocatedMinutes: (json['total_allocated_minutes'] ?? 0.0).toDouble(), // NEW
+      totalAllocatedMinutes: (json['total_allocated_minutes'] ?? 0.0)
+          .toDouble(), // NEW
     );
   }
 }
@@ -119,12 +120,13 @@ final subscriptionRepositoryProvider = Provider(
 // --- PROVIDERS ---
 final subscriptionPlansProvider =
     FutureProvider.autoDispose<List<SubscriptionPlan>>((ref) async {
-  final repository = ref.watch(subscriptionRepositoryProvider);
-  return await repository.getPlans();
-});
+      final repository = ref.watch(subscriptionRepositoryProvider);
+      return await repository.getPlans();
+    });
 
-final mySubscriptionProvider =
-    FutureProvider.autoDispose<UserSubscription>((ref) async {
+final mySubscriptionProvider = FutureProvider.autoDispose<UserSubscription>((
+  ref,
+) async {
   final repository = ref.watch(subscriptionRepositoryProvider);
   return await repository.getMySubscription();
 });

@@ -24,10 +24,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
 
     final success = await ref
         .read(authControllerProvider.notifier)
-        .verifyOtp(
-          _otpController.text.trim(),
-          is2FA: is2FA,
-        );
+        .verifyOtp(_otpController.text.trim(), is2FA: is2FA);
 
     if (success && mounted) {
       if (widget.flow == 'reset') {
@@ -54,8 +51,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
-    final email =
-        authState.pendingEmail ?? "your email";
+    final email = authState.pendingEmail ?? "your email";
 
     return Scaffold(
       backgroundColor: AppColors.background,

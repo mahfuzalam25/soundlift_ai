@@ -31,18 +31,30 @@ class SessionsScreen extends ConsumerWidget {
         ),
         title: const Text(
           "Login History & Sessions",
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: sessionsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
         error: (err, stack) => Center(
-          child: Text("Error loading sessions: $err", style: const TextStyle(color: Colors.redAccent)),
+          child: Text(
+            "Error loading sessions: $err",
+            style: const TextStyle(color: Colors.redAccent),
+          ),
         ),
         data: (sessions) {
           if (sessions.isEmpty) {
             return const Center(
-              child: Text("No sessions found.", style: TextStyle(color: AppColors.textGrey)),
+              child: Text(
+                "No sessions found.",
+                style: TextStyle(color: AppColors.textGrey),
+              ),
             );
           }
 
@@ -57,7 +69,9 @@ class SessionsScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: AppColors.cards,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.textGrey.withOpacity(0.1)),
+                  border: Border.all(
+                    color: AppColors.textGrey.withOpacity(0.1),
+                  ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,14 +79,18 @@ class SessionsScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: session.isActive 
-                            ? AppColors.success.withOpacity(0.1) 
+                        color: session.isActive
+                            ? AppColors.success.withOpacity(0.1)
                             : AppColors.textGrey.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        session.userAgent.contains('Dart') ? Icons.phone_android : Icons.computer,
-                        color: session.isActive ? AppColors.success : AppColors.textGrey,
+                        session.userAgent.contains('Dart')
+                            ? Icons.phone_android
+                            : Icons.computer,
+                        color: session.isActive
+                            ? AppColors.success
+                            : AppColors.textGrey,
                         size: 24,
                       ),
                     ),
@@ -86,30 +104,50 @@ class SessionsScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 session.ipAddress,
-                                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               if (session.isActive)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.success.withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Text("Active", style: TextStyle(color: AppColors.success, fontSize: 10, fontWeight: FontWeight.bold)),
+                                  child: const Text(
+                                    "Active",
+                                    style: TextStyle(
+                                      color: AppColors.success,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                             ],
                           ),
                           const SizedBox(height: 6),
                           Text(
                             session.userAgent,
-                            style: const TextStyle(color: AppColors.textGrey, fontSize: 12),
+                            style: const TextStyle(
+                              color: AppColors.textGrey,
+                              fontSize: 12,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
                           Text(
                             _formatDate(session.loginDatetime),
-                            style: const TextStyle(color: AppColors.primary, fontSize: 12),
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),

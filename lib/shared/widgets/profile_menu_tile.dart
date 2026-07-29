@@ -22,14 +22,14 @@ class ProfileMenuTile extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isDestructive 
-              ? Colors.redAccent.withOpacity(0.1) 
+          color: isDestructive
+              ? Colors.redAccent.withOpacity(0.1)
               : AppColors.primary.withOpacity(0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(
-          icon, 
-          color: isDestructive ? Colors.redAccent : AppColors.primary, 
+          icon,
+          color: isDestructive ? Colors.redAccent : AppColors.primary,
           size: 20,
         ),
       ),
@@ -41,7 +41,11 @@ class ProfileMenuTile extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
       ),
-      trailing: const Icon(Icons.arrow_forward_ios, color: AppColors.textGrey, size: 16),
+      trailing: const Icon(
+        Icons.arrow_forward_ios,
+        color: AppColors.textGrey,
+        size: 16,
+      ),
       onTap: onTap,
     );
   }

@@ -31,20 +31,29 @@ class SettingDropdownTile extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       trailing: DropdownButton<String>(
         value: currentValue,
         dropdownColor: AppColors.cards,
         borderRadius: BorderRadius.circular(12),
         underline: const SizedBox(),
-        icon: const Icon(Icons.unfold_more, color: AppColors.textGrey, size: 20),
-        style: const TextStyle(color: AppColors.accent, fontSize: 14, fontWeight: FontWeight.w600),
+        icon: const Icon(
+          Icons.unfold_more,
+          color: AppColors.textGrey,
+          size: 20,
+        ),
+        style: const TextStyle(
+          color: AppColors.accent,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
         items: options.map((String option) {
-          return DropdownMenuItem<String>(
-            value: option,
-            child: Text(option),
-          );
+          return DropdownMenuItem<String>(value: option, child: Text(option));
         }).toList(),
         onChanged: onChanged,
       ),

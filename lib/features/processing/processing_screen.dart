@@ -153,12 +153,21 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
                           if (isCompleted) {
                             // NEW: Evaluate Free Plan Ad Interception
                             final sub = ref.read(mySubscriptionProvider).value;
-                            if (sub != null && sub.planName.toLowerCase() == 'free') {
-                              AdService.showInterstitialWithLoader(context, onComplete: () {
-                                if (mounted) context.pushReplacement('/project/${widget.jobId}');
-                              });
+                            if (sub != null &&
+                                sub.planName.toLowerCase() == 'free') {
+                              AdService.showInterstitialWithLoader(
+                                context,
+                                onComplete: () {
+                                  if (mounted)
+                                    context.pushReplacement(
+                                      '/project/${widget.jobId}',
+                                    );
+                                },
+                              );
                             } else {
-                              context.pushReplacement('/project/${widget.jobId}');
+                              context.pushReplacement(
+                                '/project/${widget.jobId}',
+                              );
                             }
                           } else {
                             context.go('/dashboard');

@@ -26,8 +26,18 @@ class DashboardScreen extends ConsumerWidget {
     try {
       final date = DateTime.parse(isoDate).toLocal();
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       final month = months[date.month - 1];
       final day = date.day.toString().padLeft(2, '0');
@@ -253,10 +263,7 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: 32),
 
             // NEW: Top Banner Ad for Free Users
-            if (isFree) ...[
-              const BannerAdWidget(),
-              const SizedBox(height: 16),
-            ],
+            if (isFree) ...[const BannerAdWidget(), const SizedBox(height: 16)],
 
             // Quick Actions
             const Text(
@@ -338,17 +345,31 @@ class DashboardScreen extends ConsumerWidget {
 
                 return Column(
                   children: recentCompleted.map((project) {
-                    final format = project['media_file']?['format']?.toString().toLowerCase() ?? 'mp4';
-                    final isVideo = ['mp4', 'mov', 'avi', 'mkv'].contains(format);
-                    final projectName = project['project_name'] ?? 'Untitled Project';
+                    final format =
+                        project['media_file']?['format']
+                            ?.toString()
+                            .toLowerCase() ??
+                        'mp4';
+                    final isVideo = [
+                      'mp4',
+                      'mov',
+                      'avi',
+                      'mkv',
+                    ].contains(format);
+                    final projectName =
+                        project['project_name'] ?? 'Untitled Project';
 
                     return GestureDetector(
                       onTap: () {
                         // NEW: Intercept History Click with Interstitial Ad
                         if (isFree) {
-                          AdService.showInterstitialWithLoader(context, onComplete: () {
-                            if (context.mounted) context.push('/project/${project['id']}');
-                          });
+                          AdService.showInterstitialWithLoader(
+                            context,
+                            onComplete: () {
+                              if (context.mounted)
+                                context.push('/project/${project['id']}');
+                            },
+                          );
                         } else {
                           context.push('/project/${project['id']}');
                         }
@@ -359,7 +380,9 @@ class DashboardScreen extends ConsumerWidget {
                           projectName: projectName,
                           status: "Completed",
                           date: _formatDate(project['created_at']),
-                          typeIcon: isVideo ? Icons.video_file : Icons.audio_file,
+                          typeIcon: isVideo
+                              ? Icons.video_file
+                              : Icons.audio_file,
                         ),
                       ),
                     );
@@ -369,10 +392,7 @@ class DashboardScreen extends ConsumerWidget {
             ),
 
             // NEW: Bottom Banner Ad for Free Users
-            if (isFree) ...[
-              const SizedBox(height: 16),
-              const BannerAdWidget(),
-            ],
+            if (isFree) ...[const SizedBox(height: 16), const BannerAdWidget()],
           ],
         ),
       ),

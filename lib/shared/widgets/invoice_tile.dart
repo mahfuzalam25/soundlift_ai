@@ -35,7 +35,11 @@ class InvoiceTile extends StatelessWidget {
               color: AppColors.background,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.receipt_long, color: AppColors.primary, size: 20),
+            child: const Icon(
+              Icons.receipt_long,
+              color: AppColors.primary,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -44,22 +48,39 @@ class InvoiceTile extends StatelessWidget {
               children: [
                 Text(
                   "Invoice $invoiceId",
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Text(
                       date,
-                      style: const TextStyle(color: AppColors.textGrey, fontSize: 12),
+                      style: const TextStyle(
+                        color: AppColors.textGrey,
+                        fontSize: 12,
+                      ),
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text("•", style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
+                      child: Text(
+                        "•",
+                        style: TextStyle(
+                          color: AppColors.textGrey,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                     Text(
                       amount,
-                      style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -69,7 +90,9 @@ class InvoiceTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: isPaid ? AppColors.success.withOpacity(0.1) : Colors.orangeAccent.withOpacity(0.1),
+              color: isPaid
+                  ? AppColors.success.withOpacity(0.1)
+                  : Colors.orangeAccent.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(

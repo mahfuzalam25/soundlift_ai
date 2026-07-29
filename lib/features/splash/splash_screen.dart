@@ -43,9 +43,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           // NEW: Validate Plan & Fire Ad if Free User
           final sub = await ref.read(mySubscriptionProvider.future);
           if (sub.planName.toLowerCase() == 'free') {
-            AdService.showInterstitialWithLoader(context, onComplete: () {
-              if (mounted) context.go('/dashboard');
-            });
+            AdService.showInterstitialWithLoader(
+              context,
+              onComplete: () {
+                if (mounted) context.go('/dashboard');
+              },
+            );
           } else {
             context.go('/dashboard');
           }
