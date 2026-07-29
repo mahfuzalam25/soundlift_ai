@@ -48,8 +48,13 @@ void main() {
 
       await tester.pumpWidget(createRouterTestApp(child: const SplashScreen()));
 
-      // Verify that SplashScreen and its fallback branding text are mounted
+      // Advance the virtual clock by one frame so the FadeTransition and Image can render
+      await tester.pump();
+
+      // Verify that SplashScreen is mounted
       expect(find.byType(SplashScreen), findsOneWidget);
+
+      // Verify that the Image widget is present in the tree
       expect(find.byType(Image), findsOneWidget);
     });
 
