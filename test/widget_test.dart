@@ -46,15 +46,13 @@ void main() {
     ) async {
       SharedPreferences.setMockInitialValues({});
 
-      await tester.pumpWidget(
-        createRouterTestApp(child: const SplashScreen()),
-      );
+      await tester.pumpWidget(createRouterTestApp(child: const SplashScreen()));
 
       // 1. Verify that SplashScreen and its fallback branding text are mounted immediately
       expect(find.byType(SplashScreen), findsOneWidget);
       expect(find.byType(Image), findsOneWidget);
 
-      // 2. FIX: Fast-forward the virtual clock to flush out the pending 
+      // 2. FIX: Fast-forward the virtual clock to flush out the pending
       // Animation and Future.delayed timers so the test can exit cleanly without throwing the Timer error.
       await tester.pump(const Duration(seconds: 2));
       await tester.pump(const Duration(seconds: 3));
