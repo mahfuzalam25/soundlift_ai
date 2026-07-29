@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // NEW: Imported dotenv
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:soundlift_ai/features/onboarding/onboarding_screen.dart';
 import 'package:soundlift_ai/features/splash/splash_screen.dart';
 import 'package:soundlift_ai/features/auth/login_screen.dart';
 import 'package:soundlift_ai/features/auth/register_screen.dart';
+import 'package:soundlift_ai/features/auth/otp_verify_screen.dart';
+import 'package:soundlift_ai/features/auth/forgot_password_screen.dart';
+import 'package:soundlift_ai/features/auth/new_password_screen.dart';
 
 /// Test harness helper to wrap tested screens inside a mock [GoRouter] and [ProviderScope].
 Widget createRouterTestApp({
@@ -29,9 +32,29 @@ Widget createRouterTestApp({
             const Scaffold(body: Text('Auth Destination Screen')),
       ),
       GoRoute(
+        path: '/auth/login',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Login Destination Screen')),
+      ),
+      GoRoute(
+        path: '/auth/register',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Register Destination Screen')),
+      ),
+      GoRoute(
         path: '/auth/verify',
         builder: (context, state) =>
             const Scaffold(body: Text('Verify Destination Screen')),
+      ),
+      GoRoute(
+        path: '/auth/forgot-password',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Forgot Password Destination Screen')),
+      ),
+      GoRoute(
+        path: '/auth/new-password',
+        builder: (context, state) =>
+            const Scaffold(body: Text('New Password Destination Screen')),
       ),
       GoRoute(
         path: '/dashboard',
@@ -48,7 +71,7 @@ Widget createRouterTestApp({
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  // NEW: Inject mock environment variables into the test harness memory
+  // Inject mock environment variables into the test harness memory
   // to prevent the NotInitializedError when providers load.
   dotenv.testLoad(
     fileInput: '''
@@ -165,7 +188,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     testWidgets('Renders LoginScreen UI elements correctly', (
       WidgetTester tester,
     ) async {
-      // NEW: Mock SharedPreferences before rendering the LoginScreen
       SharedPreferences.setMockInitialValues({});
 
       await tester.pumpWidget(createRouterTestApp(child: const LoginScreen()));
@@ -226,6 +248,90 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pump();
 
       expect(find.text("Passwords do not match"), findsOneWidget);
+    });
+  });
+
+  group('ForgotPasswordScreen Widget Tests', () {
+    testWidgets('Renders ForgotPasswordScreen UI elements correctly', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        createRouterTestApp(child: const ForgotPasswordScreen()),
+      );
+
+      expect(find.text("Reset Password"), findsOneWidget);
+      expect(find.text("Enter your email to receive an OTP."), findsOneWidget);
+      expect(find.text("Send OTP"), findsOneWidget);
+    });
+
+    testWidgets('Tapping "Send OTP" navigates to OTP verification screen', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        createRouterTestApp(child: const ForgotPasswordScreen()),
+      );
+
+      await tester.tap(find.text("Send OTP"));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Verify Destination Screen'), findsOneWidget);
+    });
+  });
+
+  group('OtpVerifyScreen Widget Tests', () {
+    testWidgets(
+      'Renders OtpVerifyScreen elements correctly for register flow',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({});
+
+        await tester.pumpWidget(
+          createRouterTestApp(child: const OtpVerifyScreen(flow: 'register')),
+        );
+
+        expect(find.text("Verify OTP"), findsOneWidget);
+        expect(find.text("Verify"), findsOneWidget);
+        expect(find.byType(EditableText), findsOneWidget);
+      },
+    );
+
+    testWidgets('Renders OtpVerifyScreen elements correctly for reset flow', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const OtpVerifyScreen(flow: 'reset')),
+      );
+
+      expect(find.text("Verify OTP"), findsOneWidget);
+      expect(find.text("Verify"), findsOneWidget);
+    });
+  });
+
+  group('NewPasswordScreen Widget Tests', () {
+    testWidgets('Renders NewPasswordScreen UI elements correctly', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        createRouterTestApp(child: const NewPasswordScreen()),
+      );
+
+      expect(find.text("Create New Password"), findsOneWidget);
+      expect(find.byType(EditableText), findsNWidgets(2));
+      expect(find.text("Save & Login"), findsOneWidget);
+    });
+
+    testWidgets('Tapping "Save & Login" navigates to login route', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        createRouterTestApp(child: const NewPasswordScreen()),
+      );
+
+      await tester.tap(find.text("Save & Login"));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Login Destination Screen'), findsOneWidget);
     });
   });
 }
