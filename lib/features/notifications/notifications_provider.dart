@@ -1,8 +1,10 @@
-import 'dart:async';
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../core/network/api_client.dart';
-
 
 class NotificationModel {
   final String id;
@@ -40,7 +42,6 @@ class NotificationModel {
   }
 }
 
-
 class NotificationsState {
   final bool isLoading;
   final List<NotificationModel> notifications;
@@ -71,7 +72,6 @@ class NotificationsState {
   }
 }
 
-// Repository
 class NotificationsRepository {
   final Dio _dio;
   NotificationsRepository(this._dio);
@@ -96,29 +96,44 @@ final notificationsRepositoryProvider = Provider(
   (ref) => NotificationsRepository(ref.watch(dioProvider)),
 );
 
-// Controller
 class NotificationsController extends StateNotifier<NotificationsState> {
   final NotificationsRepository _repository;
-  Timer? _pollingTimer;
+  WebSocketChannel? _channel;
 
   NotificationsController(this._repository) : super(NotificationsState()) {
     loadNotifications();
-    _startPolling();
+    _initWebSocket();
   }
 
-  void _startPolling() {
-    _pollingTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      _silentFetch();
-    });
-  }
+  Future<void> _initWebSocket() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
 
-  Future<void> _silentFetch() async {
-    try {
-      final freshNotifications = await _repository.fetchNotifications();
-      state = state.copyWith(notifications: freshNotifications);
-    } catch (e) {
-      // Ignore errors during silent polling so we don't spam the user with snackbars
-    }
+    if (token == null) return;
+
+    final baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://127.0.0.1:8001';
+    final wsBaseUrl = baseUrl.replaceFirst('http', 'ws');
+    final wsUrl = Uri.parse('$wsBaseUrl/ws/notifications/?token=$token');
+
+    _channel = WebSocketChannel.connect(wsUrl);
+
+    _channel!.stream.listen(
+      (message) {
+        final data = jsonDecode(message);
+        final newNotification = NotificationModel.fromJson(data);
+
+        // Inject the new notification at the top of the list in real-time
+        state = state.copyWith(
+          notifications: [newNotification, ...state.notifications],
+        );
+      },
+      onError: (error) {
+        print("WebSocket Error: $error");
+      },
+      onDone: () {
+        print("WebSocket Disconnected");
+      },
+    );
   }
 
   Future<void> loadNotifications({bool forceRefresh = false}) async {
@@ -181,7 +196,7 @@ class NotificationsController extends StateNotifier<NotificationsState> {
 
   @override
   void dispose() {
-    _pollingTimer?.cancel();
+    _channel?.sink.close();
     super.dispose();
   }
 }

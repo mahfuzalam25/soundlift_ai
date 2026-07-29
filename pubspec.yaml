@@ -51,6 +51,8 @@ dependencies:
   flutter_inappwebview: ^6.1.5
   path_provider: ^2.1.6
   ffmpeg_kit_flutter_new: ^4.1.0
+  web_socket_channel: ^2.4.0
+  google_mobile_ads: ^9.0.0
 
 dev_dependencies:
   flutter_test:

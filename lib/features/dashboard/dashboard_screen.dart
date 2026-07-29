@@ -7,6 +7,8 @@ import '../../shared/widgets/project_list_tile.dart';
 import '../profile/profile_provider.dart';
 import '../notifications/notifications_provider.dart';
 import '../projects/providers/project_provider.dart';
+import '../subscription/providers/subscription_provider.dart';
+import '../../core/services/ad_service.dart'; // NEW
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -24,18 +26,8 @@ class DashboardScreen extends ConsumerWidget {
     try {
       final date = DateTime.parse(isoDate).toLocal();
       final months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
       ];
       final month = months[date.month - 1];
       final day = date.day.toString().padLeft(2, '0');
@@ -56,6 +48,10 @@ class DashboardScreen extends ConsumerWidget {
     final user = profileState.profile;
 
     final projectListAsync = ref.watch(projectListProvider);
+    final mySubAsync = ref.watch(mySubscriptionProvider);
+
+    // NEW: Check user ad eligibility
+    final isFree = mySubAsync.value?.planName.toLowerCase() == 'free';
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -94,7 +90,6 @@ class DashboardScreen extends ConsumerWidget {
                           ),
                   ],
                 ),
-                // Notification Bell & Avatar
                 Row(
                   children: [
                     Consumer(
@@ -137,75 +132,131 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: 32),
 
             // Credit/Plan Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.accent],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+            mySubAsync.when(
+              loading: () => Container(
+                width: double.infinity,
+                height: 180,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.accent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              error: (err, stack) => Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.redAccent.withOpacity(0.5)),
+                ),
+                child: Text(
+                  "Error: $err",
+                  style: const TextStyle(color: Colors.redAccent),
+                ),
+              ),
+              data: (mySub) {
+                final allocated = mySub.totalAllocatedMinutes;
+                final remaining = mySub.remainingMinutes;
+                final used = (allocated - remaining).clamp(0.0, allocated);
+                final usageRatio = allocated > 0
+                    ? (used / allocated).clamp(0.0, 1.0)
+                    : 0.0;
+
+                String renewsDate = "Unknown";
+                if (mySub.currentPeriodEnd.isNotEmpty) {
+                  renewsDate = _formatDate(mySub.currentPeriodEnd);
+                }
+
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primary, AppColors.accent],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Current Plan",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            "${mySub.planName} Tier",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       Text(
-                        "Current Plan",
+                        "${remaining.toStringAsFixed(1)} / ${allocated.toStringAsFixed(0)}",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Text(
+                        "Minutes Remaining",
                         style: TextStyle(color: Colors.white70, fontSize: 14),
                       ),
+                      const SizedBox(height: 16),
+                      LinearProgressIndicator(
+                        value: usageRatio,
+                        backgroundColor: Colors.white.withOpacity(0.2),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.white,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      const SizedBox(height: 16),
                       Text(
-                        "Pro Tier",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                        "Renews on $renewsDate",
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "124 / 500",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Text(
-                    "Minutes Remaining",
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                  const SizedBox(height: 16),
-                  LinearProgressIndicator(
-                    value: 124 / 500,
-                    backgroundColor: Colors.white.withOpacity(0.2),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Colors.white,
-                    ),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Renews on Dec 12, 2026",
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
             const SizedBox(height: 32),
+
+            // NEW: Top Banner Ad for Free Users
+            if (isFree) ...[
+              const BannerAdWidget(),
+              const SizedBox(height: 16),
+            ],
 
             // Quick Actions
             const Text(
@@ -287,23 +338,20 @@ class DashboardScreen extends ConsumerWidget {
 
                 return Column(
                   children: recentCompleted.map((project) {
-                    final format =
-                        project['media_file']?['format']
-                            ?.toString()
-                            .toLowerCase() ??
-                        'mp4';
-                    final isVideo = [
-                      'mp4',
-                      'mov',
-                      'avi',
-                      'mkv',
-                    ].contains(format);
-                    final projectName =
-                        project['project_name'] ?? 'Untitled Project';
+                    final format = project['media_file']?['format']?.toString().toLowerCase() ?? 'mp4';
+                    final isVideo = ['mp4', 'mov', 'avi', 'mkv'].contains(format);
+                    final projectName = project['project_name'] ?? 'Untitled Project';
 
                     return GestureDetector(
                       onTap: () {
-                        context.push('/project/${project['id']}');
+                        // NEW: Intercept History Click with Interstitial Ad
+                        if (isFree) {
+                          AdService.showInterstitialWithLoader(context, onComplete: () {
+                            if (context.mounted) context.push('/project/${project['id']}');
+                          });
+                        } else {
+                          context.push('/project/${project['id']}');
+                        }
                       },
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -311,9 +359,7 @@ class DashboardScreen extends ConsumerWidget {
                           projectName: projectName,
                           status: "Completed",
                           date: _formatDate(project['created_at']),
-                          typeIcon: isVideo
-                              ? Icons.video_file
-                              : Icons.audio_file,
+                          typeIcon: isVideo ? Icons.video_file : Icons.audio_file,
                         ),
                       ),
                     );
@@ -321,6 +367,12 @@ class DashboardScreen extends ConsumerWidget {
                 );
               },
             ),
+
+            // NEW: Bottom Banner Ad for Free Users
+            if (isFree) ...[
+              const SizedBox(height: 16),
+              const BannerAdWidget(),
+            ],
           ],
         ),
       ),

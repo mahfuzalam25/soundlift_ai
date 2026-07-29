@@ -41,10 +41,21 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
             _nameController.text = _selectedFile!.name.split('.').first;
           }
         });
-        if (mounted) CustomSnackbar.show(context: context, message: "File loaded: ${_selectedFile!.name}");
+        if (mounted) {
+          CustomSnackbar.show(
+            context: context,
+            message: "File loaded: ${_selectedFile!.name}",
+          );
+        }
       }
     } catch (e) {
-      if (mounted) CustomSnackbar.show(context: context, message: "Failed to pick file.", isError: true);
+      if (mounted) {
+        CustomSnackbar.show(
+          context: context,
+          message: "Failed to pick file.",
+          isError: true,
+        );
+      }
     }
   }
 
@@ -52,28 +63,44 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
     setState(() => _selectedFile = null);
   }
 
+  // ACCURATE BYTE FORMATTING FIX
   String _formatBytes(int bytes) {
     if (bytes <= 0) return "0 B";
     const suffixes = ["B", "KB", "MB", "GB", "TB"];
-    var i = (bytes.toString().length - 1) ~/ 3;
-    return "${(bytes / (1024 * i > 0 ? 1024 * i : 1)).toStringAsFixed(2)} ${suffixes[i]}";
+    double size = bytes.toDouble();
+    int i = 0;
+    while (size >= 1024 && i < suffixes.length - 1) {
+      size /= 1024;
+      i++;
+    }
+    return "${size.toStringAsFixed(2)} ${suffixes[i]}";
   }
 
   Future<void> _submitProject() async {
     if (_nameController.text.isEmpty) {
-      CustomSnackbar.show(context: context, message: "Please enter a project name.", isError: true);
+      CustomSnackbar.show(
+        context: context,
+        message: "Please enter a project name.",
+        isError: true,
+      );
       return;
     }
     if (_selectedFile == null) {
-      CustomSnackbar.show(context: context, message: "Please select a file first", isError: true);
+      CustomSnackbar.show(
+        context: context,
+        message: "Please select a file first",
+        isError: true,
+      );
       return;
     }
 
-    final projectId = await ref.read(projectControllerProvider.notifier).submitProject(
-      name: _nameController.text,
-      type: widget.type,
-      filePath: _selectedFile!.path!,
-    );
+    final projectId = await ref
+        .read(projectControllerProvider.notifier)
+        .submitProject(
+          name: _nameController.text,
+          type: widget.type,
+          filePath: _selectedFile!.path!,
+        );
 
     if (projectId != null && mounted) {
       context.pushReplacement('/processing/$projectId');
@@ -103,10 +130,13 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
           children: [
             const Text(
               "Project Details",
-              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 24),
-            
             TextField(
               controller: _nameController,
               style: const TextStyle(color: Colors.white),
@@ -114,7 +144,9 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                 labelText: "Project Name",
                 labelStyle: const TextStyle(color: AppColors.textGrey),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: AppColors.primary.withOpacity(0.5)),
+                  borderSide: BorderSide(
+                    color: AppColors.primary.withOpacity(0.5),
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -126,16 +158,15 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
             if (_selectedFile == null)
               UploadDropzone(onTap: _pickFile)
             else
               _buildSelectedFileCard(),
-
             const SizedBox(height: 40),
-
             projectState.isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  )
                 : PrimaryButton(
                     text: "Submit for Processing",
                     onPressed: _submitProject,
@@ -157,12 +188,20 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
       ),
       child: Column(
         children: [
-          const Icon(Icons.insert_drive_file, size: 48, color: AppColors.accent),
+          const Icon(
+            Icons.insert_drive_file,
+            size: 48,
+            color: AppColors.accent,
+          ),
           const SizedBox(height: 16),
           Text(
             _selectedFile!.name,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -174,8 +213,15 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
           const SizedBox(height: 16),
           TextButton.icon(
             onPressed: _removeFile,
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-            label: const Text("Remove File", style: TextStyle(color: Colors.redAccent)),
+            icon: const Icon(
+              Icons.delete_outline,
+              color: Colors.redAccent,
+              size: 20,
+            ),
+            label: const Text(
+              "Remove File",
+              style: TextStyle(color: Colors.redAccent),
+            ),
           ),
         ],
       ),

@@ -52,12 +52,13 @@ class _ReplaceAudioUploadScreenState
         });
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         CustomSnackbar.show(
           context: context,
           message: "Failed to pick file.",
           isError: true,
         );
+      }
     }
   }
 
@@ -115,8 +116,9 @@ class _ReplaceAudioUploadScreenState
                   setState(() {
                     if (isVideo) {
                       _videoMediaList.add(mediaData);
-                      if (_nameController.text.isEmpty)
+                      if (_nameController.text.isEmpty) {
                         _nameController.text = p['project_name'];
+                      }
                     } else {
                       _audioMediaList.add(mediaData);
                     }
@@ -129,12 +131,13 @@ class _ReplaceAudioUploadScreenState
         );
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         CustomSnackbar.show(
           context: context,
           message: "Failed to load projects.",
           isError: true,
         );
+      }
     }
   }
 
@@ -174,11 +177,17 @@ class _ReplaceAudioUploadScreenState
     );
   }
 
+  // ACCURATE BYTE FORMATTING FIX
   String _formatBytes(int bytes) {
     if (bytes <= 0) return "0 B";
     const suffixes = ["B", "KB", "MB", "GB", "TB"];
-    var i = (bytes.toString().length - 1) ~/ 3;
-    return "${(bytes / (1024 * i > 0 ? 1024 * i : 1)).toStringAsFixed(2)} ${suffixes[i]}";
+    double size = bytes.toDouble();
+    int i = 0;
+    while (size >= 1024 && i < suffixes.length - 1) {
+      size /= 1024;
+      i++;
+    }
+    return "${size.toStringAsFixed(2)} ${suffixes[i]}";
   }
 
   @override

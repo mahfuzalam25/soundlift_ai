@@ -45,19 +45,32 @@ class ProjectRepository {
     required String name,
     required String type,
     required String filePath,
+    String? bgmUrl,
+    double? bgmVolume,
   }) async {
-    FormData formData = FormData.fromMap({
+    // Build the dynamic map for Multipart processing
+    final Map<String, dynamic> dataMap = {
       'project_name': name,
       'project_type': type,
       'original_file': await MultipartFile.fromFile(filePath),
-    });
+    };
+
+    // Append BGM data only if it exists
+    if (bgmUrl != null) {
+      dataMap['background_music_url'] = bgmUrl;
+    }
+    if (bgmVolume != null) {
+      dataMap['bg_music_volume'] = bgmVolume.toString();
+    }
+
+    FormData formData = FormData.fromMap(dataMap);
 
     final response = await _dio.post(
       '/api/projects/',
       data: formData,
       options: Options(
-        sendTimeout: const Duration(minutes: 10),
-        receiveTimeout: const Duration(minutes: 10),
+        sendTimeout: const Duration(hours: 1),
+        receiveTimeout: const Duration(hours: 1),
       ),
     );
     return response.data;
@@ -89,7 +102,6 @@ class ProjectRepository {
 final projectRepositoryProvider = Provider(
   (ref) => ProjectRepository(ref.watch(dioProvider)),
 );
-
 
 final projectListProvider = FutureProvider.autoDispose<List<dynamic>>((
   ref,
@@ -124,6 +136,8 @@ class ProjectController extends StateNotifier<ProjectState> {
     required String name,
     required String type,
     required String filePath,
+    String? bgmUrl,
+    double? bgmVolume,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
@@ -131,6 +145,8 @@ class ProjectController extends StateNotifier<ProjectState> {
         name: name,
         type: type,
         filePath: filePath,
+        bgmUrl: bgmUrl,
+        bgmVolume: bgmVolume,
       );
       state = state.copyWith(isLoading: false);
       return response['id'];

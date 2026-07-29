@@ -1,0 +1,118 @@
+name: SoundLift AI CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # --------------------------------------------------------
+  # 1. CODE ANALYSIS & UNIT TESTING
+  # --------------------------------------------------------
+  test:
+    name: Analyze and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.10.x' # Matches your pubspec.yaml constraint
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Verify Formatting & Analyze
+        run: |
+          flutter format --set-exit-if-changed .
+          flutter analyze
+
+      - name: Run Unit Tests
+        run: flutter test
+
+  # --------------------------------------------------------
+  # 2. ANDROID BUILD & PLAY STORE DEPLOYMENT
+  # --------------------------------------------------------
+  build_android:
+    name: Build Android (APK & AAB)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.10.x'
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # Build the APK for direct distribution/testing
+      - name: Build APK
+        run: flutter build apk --release
+
+      # Build the App Bundle for the Play Store
+      - name: Build AAB
+        run: flutter build appbundle --release
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload AAB Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+
+      # ========================================================
+      # PRODUCTION PLAY STORE DEPLOYMENT (COMMENTED OUT FOR NOW)
+      # ========================================================
+      # - name: Deploy to Google Play Store
+      #   uses: r0adkll/upload-google-play@v1
+      #   with:
+      #     serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
+      #     packageName: com.yourcompany.soundlift
+      #     releaseFiles: build/app/outputs/bundle/release/app-release.aab
+      #     track: internal # Change to 'production' or 'alpha' when ready
+      #     status: completed
+
+  # --------------------------------------------------------
+  # 3. IOS BUILD VERIFICATION (NO CREDENTIALS REQUIRED)
+  # --------------------------------------------------------
+  build_ios:
+    name: Verify iOS Compilation
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.10.x'
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # The --no-codesign flag allows the CI to verify that the iOS app compiles
+      # perfectly without failing due to missing Apple Developer Certificates.
+      - name: Build iOS (Unsigned)
+        run: flutter build ios --release --no-codesign

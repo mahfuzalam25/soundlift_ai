@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/dialogs/custom_snackbar.dart';
 import '../projects/providers/project_provider.dart';
+import '../../core/services/ad_service.dart'; // NEW
+import '../subscription/providers/subscription_provider.dart'; // NEW
 
 class ProcessingScreen extends ConsumerStatefulWidget {
   final String jobId;
@@ -80,7 +82,6 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
                   ),
                   const SizedBox(height: 40),
 
-                  // Progress Ring mapped to real API Data
                   SizedBox(
                     height: 120,
                     width: 120,
@@ -145,13 +146,20 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
                         ),
                       ElevatedButton(
                         onPressed: () {
-                          // Clean up and stop tracking status polling
                           ref
                               .read(projectControllerProvider.notifier)
                               .stopPolling();
 
                           if (isCompleted) {
-                            context.pushReplacement('/project/${widget.jobId}');
+                            // NEW: Evaluate Free Plan Ad Interception
+                            final sub = ref.read(mySubscriptionProvider).value;
+                            if (sub != null && sub.planName.toLowerCase() == 'free') {
+                              AdService.showInterstitialWithLoader(context, onComplete: () {
+                                if (mounted) context.pushReplacement('/project/${widget.jobId}');
+                              });
+                            } else {
+                              context.pushReplacement('/project/${widget.jobId}');
+                            }
                           } else {
                             context.go('/dashboard');
                           }

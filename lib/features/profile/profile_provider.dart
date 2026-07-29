@@ -18,6 +18,10 @@ class UserProfile {
 
   final bool pushNotifications;
   final bool emailNotifications;
+  final String currentPlan;
+  final int allocatedMinutes;
+  final double rolloverMinutes;
+  final double remainingMinutes;
 
   UserProfile({
     required this.name,
@@ -33,6 +37,10 @@ class UserProfile {
     this.totalStorageUsed = 0,
     this.pushNotifications = false,
     this.emailNotifications = false,
+    this.currentPlan = "Free",
+    this.allocatedMinutes = 10,
+    this.rolloverMinutes = 0.0,
+    this.remainingMinutes = 0.0,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -50,6 +58,10 @@ class UserProfile {
       totalStorageUsed: json['total_storage_used'] ?? 0,
       pushNotifications: json['push_notifications'] ?? false,
       emailNotifications: json['email_notifications'] ?? false,
+      currentPlan: json['current_plan'] ?? 'Free',
+      allocatedMinutes: json['allocated_minutes'] ?? 10,
+      rolloverMinutes: (json['rollover_minutes'] ?? 0.0).toDouble(),
+      remainingMinutes: (json['remaining_minutes'] ?? 0.0).toDouble(),
     );
   }
 }
@@ -187,8 +199,12 @@ class ProfileController extends StateNotifier<ProfileState> {
           totalMinutesUsed: previousProfile.totalMinutesUsed,
           totalStorageUsed: previousProfile.totalStorageUsed,
           is2faEnabled: previousProfile.is2faEnabled,
-          pushNotifications: push, 
+          pushNotifications: push,
           emailNotifications: email,
+          currentPlan: previousProfile.currentPlan,
+          allocatedMinutes: previousProfile.allocatedMinutes,
+          rolloverMinutes: previousProfile.rolloverMinutes,
+          remainingMinutes: previousProfile.remainingMinutes,
         ),
       );
     }
@@ -236,6 +252,10 @@ class ProfileController extends StateNotifier<ProfileState> {
           pushNotifications: previousProfile.pushNotifications,
           emailNotifications: previousProfile.emailNotifications,
           is2faEnabled: isEnabled,
+          currentPlan: previousProfile.currentPlan,
+          allocatedMinutes: previousProfile.allocatedMinutes,
+          rolloverMinutes: previousProfile.rolloverMinutes,
+          remainingMinutes: previousProfile.remainingMinutes,
         ),
       );
     }

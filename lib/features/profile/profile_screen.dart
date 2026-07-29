@@ -109,9 +109,9 @@ class ProfileScreen extends ConsumerWidget {
                       color: AppColors.accent.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      "Pro Plan",
-                      style: TextStyle(
+                    child: Text(
+                      "${user?.currentPlan ?? 'Free'} Plan",
+                      style: const TextStyle(
                         color: AppColors.accent,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

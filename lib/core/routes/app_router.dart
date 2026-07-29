@@ -31,8 +31,11 @@ import '../../features/support/tutorial_player_screen.dart';
 import '../../features/projects/media_viewer_screen.dart';
 import '../../features/upload/replace_audio_upload_screen.dart';
 
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/',
     routes: [
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
