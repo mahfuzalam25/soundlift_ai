@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:dio/dio.dart'; // NEW
+import 'package:soundlift_ai/core/network/api_client.dart'; // NEW
 import 'package:soundlift_ai/features/onboarding/onboarding_screen.dart';
 import 'package:soundlift_ai/features/splash/splash_screen.dart';
 import 'package:soundlift_ai/features/auth/login_screen.dart';
@@ -13,6 +15,63 @@ import 'package:soundlift_ai/features/auth/forgot_password_screen.dart';
 import 'package:soundlift_ai/features/auth/new_password_screen.dart';
 import 'package:soundlift_ai/features/dashboard/dashboard_screen.dart';
 import 'package:soundlift_ai/features/dashboard/main_layout.dart';
+
+// --- MOCK API SETUP ---
+// This safely intercepts all HTTP calls during testing, returning
+// valid JSON to prevent Riverpod parsing crashes and hanging timers.
+final mockDio = Dio();
+
+void setupMockDio() {
+  mockDio.interceptors.clear();
+  mockDio.interceptors.add(
+    InterceptorsWrapper(
+      onRequest: (options, handler) {
+        final path = options.path;
+
+        if (path.contains('/profile')) {
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: {'name': 'Test User', 'profile_picture': null},
+            ),
+          );
+        } else if (path.contains('/projects')) {
+          return handler.resolve(
+            Response(requestOptions: options, statusCode: 200, data: []),
+          );
+        } else if (path.contains('/my-subscription')) {
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: {
+                'id': '1',
+                'plan_name': 'Free',
+                'status': 'active',
+                'is_active': true,
+                'current_period_end': '2026-12-31T00:00:00Z',
+                'cancel_at_period_end': false,
+                'days_until_expiry': 30,
+                'remaining_minutes': 10.0,
+                'total_allocated_minutes': 10.0,
+              },
+            ),
+          );
+        } else if (path.contains('/plans') || path.contains('/notifications')) {
+          return handler.resolve(
+            Response(requestOptions: options, statusCode: 200, data: []),
+          );
+        }
+
+        // Generic fallback to prevent null crashes
+        return handler.resolve(
+          Response(requestOptions: options, statusCode: 200, data: {}),
+        );
+      },
+    ),
+  );
+}
 
 /// Test harness helper to wrap tested screens inside a mock [GoRouter] and [ProviderScope].
 Widget createRouterTestApp({
@@ -87,11 +146,17 @@ Widget createRouterTestApp({
     ],
   );
 
-  return ProviderScope(child: MaterialApp.router(routerConfig: router));
+  // NEW: Override the API client provider to use our Mock Dio instance
+  return ProviderScope(
+    overrides: [dioProvider.overrideWithValue(mockDio)],
+    child: MaterialApp.router(routerConfig: router),
+  );
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setupMockDio();
 
   // Inject mock environment variables into the test harness memory
   // to prevent the NotInitializedError when providers load.
@@ -366,7 +431,8 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const DashboardScreen()),
       );
-      await tester.pump();
+      // Wait for Mock Dio futures to resolve and loading indicators to clear
+      await tester.pumpAndSettle();
 
       expect(find.text("Quick Actions"), findsOneWidget);
       expect(find.text("Recent Projects"), findsOneWidget);
@@ -383,7 +449,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const DashboardScreen()),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       final notificationBell = find.byIcon(Icons.notifications_none);
       expect(notificationBell, findsOneWidget);
@@ -402,7 +468,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       SharedPreferences.setMockInitialValues({});
 
       await tester.pumpWidget(createRouterTestApp(child: const MainLayout()));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byType(BottomNavigationBar), findsOneWidget);
       expect(find.text("Home"), findsOneWidget);
@@ -418,7 +484,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       SharedPreferences.setMockInitialValues({});
 
       await tester.pumpWidget(createRouterTestApp(child: const MainLayout()));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text("Projects"));
       await tester.pumpAndSettle();
