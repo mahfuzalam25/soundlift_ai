@@ -60,7 +60,7 @@ jobs:
         run: flutter pub get
 
       - name: Create Environment File
-        run: touch .env
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
 
       # Build the APK for direct distribution/testing
       - name: Build APK
@@ -114,7 +114,7 @@ jobs:
         run: flutter pub get
 
       - name: Create Environment File
-        run: touch .env
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
 
       # The --no-codesign flag allows the CI to verify that the iOS app compiles
       # perfectly without failing due to missing Apple Developer Certificates.
