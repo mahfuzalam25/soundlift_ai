@@ -11,6 +11,8 @@ import 'package:soundlift_ai/features/auth/register_screen.dart';
 import 'package:soundlift_ai/features/auth/otp_verify_screen.dart';
 import 'package:soundlift_ai/features/auth/forgot_password_screen.dart';
 import 'package:soundlift_ai/features/auth/new_password_screen.dart';
+import 'package:soundlift_ai/features/dashboard/dashboard_screen.dart';
+import 'package:soundlift_ai/features/dashboard/main_layout.dart';
 
 /// Test harness helper to wrap tested screens inside a mock [GoRouter] and [ProviderScope].
 Widget createRouterTestApp({
@@ -60,6 +62,26 @@ Widget createRouterTestApp({
         path: '/dashboard',
         builder: (context, state) =>
             const Scaffold(body: Text('Dashboard Destination Screen')),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Notifications Destination Screen')),
+      ),
+      GoRoute(
+        path: '/upload',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Upload Destination Screen')),
+      ),
+      GoRoute(
+        path: '/upload/replace-audio',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Replace Audio Destination Screen')),
+      ),
+      GoRoute(
+        path: '/project/:id',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Project Overview Screen')),
       ),
       ...?additionalRoutes,
     ],
@@ -332,6 +354,79 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpAndSettle();
 
       expect(find.text('Login Destination Screen'), findsOneWidget);
+    });
+  });
+
+  group('DashboardScreen Widget Tests', () {
+    testWidgets('Renders DashboardScreen headers and Quick Actions', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const DashboardScreen()),
+      );
+      await tester.pump();
+
+      expect(find.text("Quick Actions"), findsOneWidget);
+      expect(find.text("Recent Projects"), findsOneWidget);
+      expect(find.text("Enhance\nAudio"), findsOneWidget);
+      expect(find.text("Enhance\nVideo"), findsOneWidget);
+      expect(find.text("Replace\nAudio"), findsOneWidget);
+    });
+
+    testWidgets('Tapping notification bell navigates to notifications route', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const DashboardScreen()),
+      );
+      await tester.pump();
+
+      final notificationBell = find.byIcon(Icons.notifications_none);
+      expect(notificationBell, findsOneWidget);
+
+      await tester.tap(notificationBell);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notifications Destination Screen'), findsOneWidget);
+    });
+  });
+
+  group('MainLayout Widget Tests', () {
+    testWidgets('Renders MainLayout bottom navigation bar items', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(createRouterTestApp(child: const MainLayout()));
+      await tester.pump();
+
+      expect(find.byType(BottomNavigationBar), findsOneWidget);
+      expect(find.text("Home"), findsOneWidget);
+      expect(find.text("Projects"), findsOneWidget);
+      expect(find.text("Create"), findsOneWidget);
+      expect(find.text("Plans"), findsOneWidget);
+      expect(find.text("Profile"), findsOneWidget);
+    });
+
+    testWidgets('Tapping bottom navigation bar tab updates active index', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(createRouterTestApp(child: const MainLayout()));
+      await tester.pump();
+
+      await tester.tap(find.text("Projects"));
+      await tester.pumpAndSettle();
+
+      final bottomNavBar = tester.widget<BottomNavigationBar>(
+        find.byType(BottomNavigationBar),
+      );
+      expect(bottomNavBar.currentIndex, 1);
     });
   });
 }
