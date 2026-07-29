@@ -15,7 +15,7 @@ import 'package:soundlift_ai/features/auth/forgot_password_screen.dart';
 import 'package:soundlift_ai/features/auth/new_password_screen.dart';
 import 'package:soundlift_ai/features/dashboard/dashboard_screen.dart';
 import 'package:soundlift_ai/features/dashboard/main_layout.dart';
-import 'package:soundlift_ai/features/create/create_screen.dart'; // NEW: Imported CreateScreen
+import 'package:soundlift_ai/features/create/create_screen.dart';
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -497,12 +497,13 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
-  // NEW: CreateScreen Widget Tests
   group('CreateScreen Widget Tests', () {
     testWidgets('Renders CreateScreen UI elements correctly', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(createRouterTestApp(child: const CreateScreen()));
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: CreateScreen())),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text("Create New Project"), findsOneWidget);
@@ -519,10 +520,14 @@ ADMOB_INTERSTITIAL_IOS=test_id
     testWidgets('Tapping Audio Enhancement navigates to upload route', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(createRouterTestApp(child: const CreateScreen()));
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: CreateScreen())),
+      );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text("Audio\nEnhancement"));
+      final audioOption = find.text("Audio\nEnhancement");
+      await tester.ensureVisible(audioOption);
+      await tester.tap(audioOption);
       await tester.pumpAndSettle();
 
       expect(find.text('Upload Destination Screen'), findsOneWidget);
@@ -531,11 +536,15 @@ ADMOB_INTERSTITIAL_IOS=test_id
     testWidgets('Tapping AI Subtitles shows coming soon Snackbar', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(createRouterTestApp(child: const CreateScreen()));
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: CreateScreen())),
+      );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text("AI Subtitles\n(Coming Soon)"));
-      await tester.pump(); // Pump just once to trigger the Snackbar frame
+      final subtitlesOption = find.text("AI Subtitles\n(Coming Soon)");
+      await tester.ensureVisible(subtitlesOption);
+      await tester.tap(subtitlesOption);
+      await tester.pump(); // Trigger SnackBar animation
 
       expect(
         find.text('AI Subtitles are coming in a future update!'),
