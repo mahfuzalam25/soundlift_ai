@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // NEW: Imported dotenv
 import 'package:soundlift_ai/features/onboarding/onboarding_screen.dart';
 import 'package:soundlift_ai/features/splash/splash_screen.dart';
 import 'package:soundlift_ai/features/auth/login_screen.dart';
@@ -47,6 +48,18 @@ Widget createRouterTestApp({
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  // NEW: Inject mock environment variables into the test harness memory
+  // to prevent the NotInitializedError when providers load.
+  dotenv.testLoad(
+    fileInput: '''
+API_BASE_URL=http://localhost:8001
+ADMOB_BANNER_ANDROID=test_id
+ADMOB_BANNER_IOS=test_id
+ADMOB_INTERSTITIAL_ANDROID=test_id
+ADMOB_INTERSTITIAL_IOS=test_id
+''',
+  );
+
   group('SplashScreen Widget Tests', () {
     testWidgets('Renders SplashScreen elements correctly', (
       WidgetTester tester,
@@ -55,12 +68,9 @@ void main() {
 
       await tester.pumpWidget(createRouterTestApp(child: const SplashScreen()));
 
-      // 1. Verify that SplashScreen and its fallback branding text are mounted immediately
       expect(find.byType(SplashScreen), findsOneWidget);
       expect(find.byType(Image), findsOneWidget);
 
-      // 2. Fast-forward the virtual clock to flush out the pending
-      // Animation and Future.delayed timers so the test can exit cleanly.
       await tester.pump(const Duration(seconds: 2));
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
@@ -73,12 +83,10 @@ void main() {
 
       await tester.pumpWidget(createRouterTestApp(child: const SplashScreen()));
 
-      // Pump through fade animation (2s) and splash delay timer (3s)
       await tester.pump(const Duration(seconds: 2));
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
 
-      // Verify redirection to /intro screen
       expect(find.text('Intro Destination Screen'), findsOneWidget);
     });
   });
@@ -91,7 +99,6 @@ void main() {
         createRouterTestApp(child: const OnboardingScreen()),
       );
 
-      // Verify 1st slide content and action buttons
       expect(find.text("AI Noise Removal"), findsOneWidget);
       expect(
         find.text("Remove unwanted noise from audio and videos."),
@@ -108,7 +115,6 @@ void main() {
         createRouterTestApp(child: const OnboardingScreen()),
       );
 
-      // --- Slide 1 -> Slide 2 ---
       await tester.tap(find.text("Next"));
       await tester.pumpAndSettle();
       expect(find.text("Professional Audio Enhancement"), findsOneWidget);
@@ -117,7 +123,6 @@ void main() {
         findsOneWidget,
       );
 
-      // --- Slide 2 -> Slide 3 ---
       await tester.tap(find.text("Next"));
       await tester.pumpAndSettle();
       expect(find.text("Video Audio Replacement"), findsOneWidget);
@@ -126,7 +131,6 @@ void main() {
         findsOneWidget,
       );
 
-      // --- Slide 3 -> Slide 4 ---
       await tester.tap(find.text("Next"));
       await tester.pumpAndSettle();
       expect(find.text("Export Anywhere"), findsOneWidget);
@@ -135,10 +139,8 @@ void main() {
         findsOneWidget,
       );
 
-      // Verify button label changes on final slide
       expect(find.text("Get Started"), findsOneWidget);
 
-      // Tap "Get Started" and verify navigation to /auth
       await tester.tap(find.text("Get Started"));
       await tester.pumpAndSettle();
       expect(find.text('Auth Destination Screen'), findsOneWidget);
@@ -163,6 +165,9 @@ void main() {
     testWidgets('Renders LoginScreen UI elements correctly', (
       WidgetTester tester,
     ) async {
+      // NEW: Mock SharedPreferences before rendering the LoginScreen
+      SharedPreferences.setMockInitialValues({});
+
       await tester.pumpWidget(createRouterTestApp(child: const LoginScreen()));
 
       expect(find.text("Let's sign in"), findsOneWidget);
@@ -175,13 +180,13 @@ void main() {
     testWidgets('Shows validation Snackbar when fields are empty', (
       WidgetTester tester,
     ) async {
+      SharedPreferences.setMockInitialValues({});
+
       await tester.pumpWidget(createRouterTestApp(child: const LoginScreen()));
 
-      // Tap the login button without filling out the email/password fields
       await tester.tap(find.text("Login"));
-      await tester.pump(); // Trigger frame for the Snackbar
+      await tester.pump();
 
-      // Verify the front-end validation triggers the correct Snackbar message
       expect(find.text("Please fill all fields"), findsOneWidget);
     });
   });
@@ -190,6 +195,8 @@ void main() {
     testWidgets('Renders RegisterScreen UI elements correctly', (
       WidgetTester tester,
     ) async {
+      SharedPreferences.setMockInitialValues({});
+
       await tester.pumpWidget(
         createRouterTestApp(child: const RegisterScreen()),
       );
@@ -203,26 +210,21 @@ void main() {
     testWidgets('Shows validation Snackbar when passwords do not match', (
       WidgetTester tester,
     ) async {
+      SharedPreferences.setMockInitialValues({});
+
       await tester.pumpWidget(
         createRouterTestApp(child: const RegisterScreen()),
       );
 
-      // EditableText is the core of all text fields (CustomTextField, TextField, TextFormField).
-      // We grab all input fields on the screen.
       final textInputs = find.byType(EditableText);
-
-      // Ensure all 5 fields exist (First Name, Last Name, Email, Password, Confirm Password)
       expect(textInputs, findsNWidgets(5));
 
-      // Enter mismatched passwords into the Password (index 3) and Confirm Password (index 4) fields
       await tester.enterText(textInputs.at(3), "SecurePass123");
       await tester.enterText(textInputs.at(4), "DifferentPass456");
 
-      // Tap Register button
       await tester.tap(find.text("Register"));
       await tester.pump();
 
-      // Verify the front-end validation caught the mismatch
       expect(find.text("Passwords do not match"), findsOneWidget);
     });
   });
