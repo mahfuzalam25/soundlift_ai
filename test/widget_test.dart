@@ -46,16 +46,19 @@ void main() {
     ) async {
       SharedPreferences.setMockInitialValues({});
 
-      await tester.pumpWidget(createRouterTestApp(child: const SplashScreen()));
+      await tester.pumpWidget(
+        createRouterTestApp(child: const SplashScreen()),
+      );
 
-      // Advance the virtual clock by one frame so the FadeTransition and Image can render
-      await tester.pump();
-
-      // Verify that SplashScreen is mounted
+      // 1. Verify that SplashScreen and its fallback branding text are mounted immediately
       expect(find.byType(SplashScreen), findsOneWidget);
-
-      // Verify that the Image widget is present in the tree
       expect(find.byType(Image), findsOneWidget);
+
+      // 2. FIX: Fast-forward the virtual clock to flush out the pending 
+      // Animation and Future.delayed timers so the test can exit cleanly without throwing the Timer error.
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
     });
 
     testWidgets('Navigates to /intro when no access token is stored', (
