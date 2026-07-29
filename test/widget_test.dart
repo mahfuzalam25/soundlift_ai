@@ -50,7 +50,7 @@ void main() {
 
       // Verify that SplashScreen and its fallback branding text are mounted
       expect(find.byType(SplashScreen), findsOneWidget);
-      expect(find.text("SoundLift AI"), findsOneWidget);
+      expect(find.byType(Image), findsOneWidget);
     });
 
     testWidgets('Navigates to /intro when no access token is stored', (
