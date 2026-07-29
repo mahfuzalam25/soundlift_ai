@@ -28,7 +28,6 @@ class NotificationTile extends StatelessWidget {
       case NotificationType.warning:
         return Icons.warning_amber_rounded;
       case NotificationType.info:
-      default:
         return Icons.info_outline;
     }
   }
@@ -40,7 +39,6 @@ class NotificationTile extends StatelessWidget {
       case NotificationType.warning:
         return Colors.orangeAccent;
       case NotificationType.info:
-      default:
         return AppColors.primary;
     }
   }

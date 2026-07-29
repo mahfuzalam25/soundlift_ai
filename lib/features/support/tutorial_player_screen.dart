@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-import '../../core/theme/app_colors.dart';
 
 class TutorialPlayerScreen extends StatefulWidget {
   final String videoId;

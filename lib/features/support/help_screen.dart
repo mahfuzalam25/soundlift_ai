@@ -4,7 +4,6 @@ import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/action_card.dart';
 import '../../shared/buttons/primary_button.dart';
-import '../../shared/dialogs/custom_snackbar.dart';
 
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});

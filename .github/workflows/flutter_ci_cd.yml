@@ -27,6 +27,7 @@ jobs:
 
       - name: Verify Formatting & Analyze
         run: |
+          touch .env
           dart format --set-exit-if-changed .
           flutter analyze
 
