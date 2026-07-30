@@ -16,6 +16,7 @@ import 'package:soundlift_ai/features/auth/new_password_screen.dart';
 import 'package:soundlift_ai/features/dashboard/dashboard_screen.dart';
 import 'package:soundlift_ai/features/dashboard/main_layout.dart';
 import 'package:soundlift_ai/features/create/create_screen.dart';
+import 'package:soundlift_ai/features/projects/projects_screen.dart'; // NEW: Imported ProjectsScreen
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -39,7 +40,26 @@ void setupMockDio() {
           );
         } else if (path.contains('/projects')) {
           return handler.resolve(
-            Response(requestOptions: options, statusCode: 200, data: []),
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: [
+                {
+                  'id': 'proj-1',
+                  'project_name': 'Sample Audio Project',
+                  'status': 'completed',
+                  'created_at': '2026-05-01T12:00:00Z',
+                  'media_file': {'format': 'mp3'},
+                },
+                {
+                  'id': 'proj-2',
+                  'project_name': 'Sample Video Project',
+                  'status': 'processing',
+                  'created_at': '2026-05-02T12:00:00Z',
+                  'media_file': {'format': 'mp4'},
+                },
+              ],
+            ),
           );
         } else if (path.contains('/my-subscription')) {
           return handler.resolve(
@@ -551,5 +571,67 @@ ADMOB_INTERSTITIAL_IOS=test_id
         findsOneWidget,
       );
     });
+  });
+
+  // NEW: ProjectsScreen Widget Tests
+  group('ProjectsScreen Widget Tests', () {
+    testWidgets('Renders ProjectsScreen UI headers, search field, and tabs', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: ProjectsScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Your Projects"), findsOneWidget);
+      expect(find.text("Search Project..."), findsOneWidget);
+      expect(find.text("Audio"), findsOneWidget);
+      expect(find.text("Video"), findsOneWidget);
+      expect(find.text("Processing"), findsOneWidget);
+      expect(find.text("Completed"), findsOneWidget);
+      expect(find.text("Failed"), findsOneWidget);
+      expect(find.text("Sample Audio Project"), findsOneWidget);
+    });
+
+    testWidgets('Filters project list when selecting the Audio filter chip', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: ProjectsScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      // Find and tap the Audio filter chip
+      final audioFilterChip = find.widgetWithText(GestureDetector, "Audio");
+      await tester.tap(audioFilterChip);
+      await tester.pumpAndSettle();
+
+      expect(find.text("Sample Audio Project"), findsOneWidget);
+      expect(find.text("Sample Video Project"), findsNothing);
+    });
+
+    testWidgets(
+      'Switches tabs to Processing tab and displays matching project',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({});
+
+        await tester.pumpWidget(
+          createRouterTestApp(child: const Scaffold(body: ProjectsScreen())),
+        );
+        await tester.pumpAndSettle();
+
+        // Tap on the 'Processing' TabBar item
+        final processingTab = find.widgetWithText(Tab, "Processing");
+        await tester.tap(processingTab);
+        await tester.pumpAndSettle();
+
+        expect(find.text("Sample Video Project"), findsOneWidget);
+        expect(find.text("Sample Audio Project"), findsNothing);
+      },
+    );
   });
 }
