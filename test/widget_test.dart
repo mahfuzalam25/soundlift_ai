@@ -17,8 +17,12 @@ import 'package:soundlift_ai/features/dashboard/dashboard_screen.dart';
 import 'package:soundlift_ai/features/dashboard/main_layout.dart';
 import 'package:soundlift_ai/features/create/create_screen.dart';
 import 'package:soundlift_ai/features/projects/projects_screen.dart';
-import 'package:soundlift_ai/features/subscription/subscription_screen.dart'; // NEW: Imported SubscriptionScreen
-import 'package:soundlift_ai/features/profile/profile_screen.dart'; // NEW: Imported ProfileScreen
+import 'package:soundlift_ai/features/subscription/subscription_screen.dart';
+import 'package:soundlift_ai/features/profile/profile_screen.dart';
+import 'package:soundlift_ai/features/profile/sessions_screen.dart'; // NEW
+import 'package:soundlift_ai/features/profile/change_password_screen.dart'; // NEW
+import 'package:soundlift_ai/features/profile/edit_profile_screen.dart'; // NEW
+import 'package:soundlift_ai/features/profile/security_screen.dart'; // NEW
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -82,7 +86,6 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/plans')) {
-          // UPDATE: Splitting plans from notifications so PricingCards can render
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -100,6 +103,23 @@ void setupMockDio() {
                   'export_resolution': 1080,
                   'has_watermark': false,
                   'features': ['Priority Support'],
+                },
+              ],
+            ),
+          );
+        } else if (path.contains('/sessions')) {
+          // NEW: Mock for SessionsScreen
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: [
+                {
+                  'id': 1,
+                  'ip_address': '192.168.1.1',
+                  'user_agent': 'Dart/3.0 (Android)',
+                  'login_datetime': '2026-07-31T12:00:00Z',
+                  'is_active': true,
                 },
               ],
             ),
@@ -188,7 +208,6 @@ Widget createRouterTestApp({
         builder: (context, state) =>
             const Scaffold(body: Text('Project Overview Screen')),
       ),
-      // NEW ROUTES FOR SUBSCRIPTION & PROFILE TESTS
       GoRoute(
         path: '/subscription/billing',
         builder: (context, state) =>
@@ -218,6 +237,17 @@ Widget createRouterTestApp({
         path: '/help',
         builder: (context, state) =>
             const Scaffold(body: Text('Help Destination Screen')),
+      ),
+      // NEW: Added missing placeholders for SecurityScreen routing
+      GoRoute(
+        path: '/profile/sessions',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Sessions Destination Screen')),
+      ),
+      GoRoute(
+        path: '/profile/change-password',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Change Password Destination Screen')),
       ),
       ...?additionalRoutes,
     ],
@@ -508,6 +538,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const DashboardScreen()),
       );
+      // Wait for Mock Dio futures to resolve and loading indicators to clear
       await tester.pumpAndSettle();
 
       expect(find.text("Quick Actions"), findsOneWidget);
@@ -689,7 +720,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     );
   });
 
-  // NEW: SubscriptionScreen Widget Tests
   group('SubscriptionScreen Widget Tests', () {
     testWidgets('Renders SubscriptionScreen UI and loaded mock data', (
       WidgetTester tester,
@@ -753,7 +783,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
-  // NEW: ProfileScreen Widget Tests
   group('ProfileScreen Widget Tests', () {
     testWidgets('Renders ProfileScreen UI and user details from mock', (
       WidgetTester tester,
@@ -814,5 +843,165 @@ ADMOB_INTERSTITIAL_IOS=test_id
         expect(find.text('Login Destination Screen'), findsOneWidget);
       },
     );
+  });
+
+  // NEW: SessionsScreen Widget Tests
+  group('SessionsScreen Widget Tests', () {
+    testWidgets('Renders SessionsScreen and loaded mock data', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: SessionsScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Login History & Sessions"), findsOneWidget);
+      expect(find.text("192.168.1.1"), findsOneWidget);
+      expect(find.text("Active"), findsOneWidget);
+    });
+  });
+
+  // NEW: ChangePasswordScreen Widget Tests
+  group('ChangePasswordScreen Widget Tests', () {
+    testWidgets('Renders ChangePasswordScreen UI elements', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: ChangePasswordScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Change Password"), findsOneWidget);
+      expect(find.text("Update your password"), findsOneWidget);
+      // It has 3 CustomTextFields
+      expect(find.byType(TextField), findsNWidgets(3));
+      expect(find.text("Update Password"), findsOneWidget);
+    });
+
+    testWidgets('Shows validation Snackbar when fields are empty', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: ChangePasswordScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final updateBtn = find.text("Update Password");
+      await tester.ensureVisible(updateBtn);
+      await tester.tap(updateBtn);
+      await tester.pump();
+
+      expect(find.text("Please fill in all fields"), findsOneWidget);
+    });
+
+    testWidgets('Shows validation Snackbar when passwords mismatch', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: ChangePasswordScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final textInputs = find.byType(EditableText);
+      expect(textInputs, findsNWidgets(3));
+
+      await tester.enterText(textInputs.at(0), "OldPass123");
+      await tester.enterText(textInputs.at(1), "NewPass123");
+      await tester.enterText(textInputs.at(2), "MismatchPass456");
+
+      final updateBtn = find.text("Update Password");
+      await tester.ensureVisible(updateBtn);
+      await tester.tap(updateBtn);
+      await tester.pump();
+
+      expect(find.text("New passwords do not match"), findsOneWidget);
+    });
+  });
+
+  // NEW: EditProfileScreen Widget Tests
+  group('EditProfileScreen Widget Tests', () {
+    testWidgets('Renders EditProfileScreen UI elements and reads mock profile', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: EditProfileScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Edit Profile"), findsOneWidget);
+      expect(find.text("Personal Information"), findsOneWidget);
+      expect(find.text("Location Details"), findsOneWidget);
+      expect(find.text("Save Changes"), findsOneWidget);
+
+      // Ensures the Dropdowns rendered safely using default fallback "Bangladesh"
+      expect(find.text("Bangladesh"), findsOneWidget);
+    });
+  });
+
+  // NEW: SecurityScreen Widget Tests
+  group('SecurityScreen Widget Tests', () {
+    testWidgets('Renders SecurityScreen UI components', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: SecurityScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Account Security"), findsOneWidget);
+      expect(find.text("Account Settings"), findsOneWidget);
+      expect(find.text("Email Verification"), findsOneWidget);
+      expect(find.text("Change Password"), findsOneWidget);
+      expect(find.text("Two-Factor Authentication"), findsOneWidget);
+      expect(find.text("Active Sessions"), findsOneWidget);
+    });
+
+    testWidgets('Tapping Change Password navigates correctly', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: SecurityScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final passBtn = find.text("Change Password");
+      await tester.ensureVisible(passBtn);
+      await tester.tap(passBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text("Change Password Destination Screen"), findsOneWidget);
+    });
+
+    testWidgets('Tapping Active Sessions navigates correctly', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: SecurityScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final sessionBtn = find.text("Active Sessions");
+      await tester.ensureVisible(sessionBtn);
+      await tester.tap(sessionBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text("Sessions Destination Screen"), findsOneWidget);
+    });
   });
 }
