@@ -17,6 +17,8 @@ import 'package:soundlift_ai/features/dashboard/dashboard_screen.dart';
 import 'package:soundlift_ai/features/dashboard/main_layout.dart';
 import 'package:soundlift_ai/features/create/create_screen.dart';
 import 'package:soundlift_ai/features/projects/projects_screen.dart';
+import 'package:soundlift_ai/features/subscription/subscription_screen.dart'; // NEW: Imported SubscriptionScreen
+import 'package:soundlift_ai/features/profile/profile_screen.dart'; // NEW: Imported ProfileScreen
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -79,7 +81,30 @@ void setupMockDio() {
               },
             ),
           );
-        } else if (path.contains('/plans') || path.contains('/notifications')) {
+        } else if (path.contains('/plans')) {
+          // UPDATE: Splitting plans from notifications so PricingCards can render
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: [
+                {
+                  'id': 'plan_1',
+                  'name': 'Pro Plan',
+                  'price': '9.99',
+                  'duration': '/month',
+                  'is_popular': true,
+                  'allocated_minutes': 100,
+                  'max_storage_mb': 500,
+                  'max_upload_mb': 50,
+                  'export_resolution': 1080,
+                  'has_watermark': false,
+                  'features': ['Priority Support'],
+                },
+              ],
+            ),
+          );
+        } else if (path.contains('/notifications')) {
           return handler.resolve(
             Response(requestOptions: options, statusCode: 200, data: []),
           );
@@ -162,6 +187,37 @@ Widget createRouterTestApp({
         path: '/project/:id',
         builder: (context, state) =>
             const Scaffold(body: Text('Project Overview Screen')),
+      ),
+      // NEW ROUTES FOR SUBSCRIPTION & PROFILE TESTS
+      GoRoute(
+        path: '/subscription/billing',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Billing Destination Screen')),
+      ),
+      GoRoute(
+        path: '/referrals',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Referrals Destination Screen')),
+      ),
+      GoRoute(
+        path: '/profile/edit',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Edit Profile Destination Screen')),
+      ),
+      GoRoute(
+        path: '/profile/security',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Security Destination Screen')),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Settings Destination Screen')),
+      ),
+      GoRoute(
+        path: '/help',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Help Destination Screen')),
       ),
       ...?additionalRoutes,
     ],
@@ -452,7 +508,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const DashboardScreen()),
       );
-      // Wait for Mock Dio futures to resolve and loading indicators to clear
       await tester.pumpAndSettle();
 
       expect(find.text("Quick Actions"), findsOneWidget);
@@ -589,15 +644,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
       expect(find.text("Audio"), findsOneWidget);
       expect(find.text("Video"), findsOneWidget);
 
-      // FIX: Use findsNWidgets(2) because "Processing" exists both as a Tab label
-      // and as the status text on 'Sample Video Project'
       expect(find.text("Processing"), findsNWidgets(2));
-
-      // FIX: Use findsNWidgets(2) because "Completed" exists both as a Tab label
-      // and as the status text on 'Sample Audio Project'
       expect(find.text("Completed"), findsNWidgets(2));
 
-      expect(find.text("Failed"), findsOneWidget); // Only the tab exists
+      expect(find.text("Failed"), findsOneWidget);
       expect(find.text("Sample Audio Project"), findsOneWidget);
     });
 
@@ -635,6 +685,133 @@ ADMOB_INTERSTITIAL_IOS=test_id
 
         expect(find.text("Sample Video Project"), findsOneWidget);
         expect(find.text("Sample Audio Project"), findsNothing);
+      },
+    );
+  });
+
+  // NEW: SubscriptionScreen Widget Tests
+  group('SubscriptionScreen Widget Tests', () {
+    testWidgets('Renders SubscriptionScreen UI and loaded mock data', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: SubscriptionScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      // Core headings
+      expect(find.text("Subscription"), findsOneWidget);
+      expect(find.text("Billing"), findsOneWidget);
+
+      // Data driven from mySubscriptionProvider Mock
+      expect(find.text("Current Plan"), findsOneWidget);
+      expect(find.text("Free Tier"), findsOneWidget);
+
+      // Data driven from subscriptionPlansProvider Mock
+      expect(find.text("Upgrade Plans"), findsOneWidget);
+      expect(find.text("Pro Plan"), findsOneWidget);
+      expect(find.text("\$9.99"), findsOneWidget);
+      expect(find.text("Refer & Earn Credits"), findsOneWidget);
+    });
+
+    testWidgets('Tapping Billing navigates to billing route', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: SubscriptionScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final billingBtn = find.text("Billing");
+      await tester.ensureVisible(billingBtn);
+      await tester.tap(billingBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Billing Destination Screen'), findsOneWidget);
+    });
+
+    testWidgets('Tapping Refer & Earn navigates to referrals route', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: SubscriptionScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final referBtn = find.text("Refer & Earn Credits");
+      await tester.ensureVisible(referBtn);
+      await tester.tap(referBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Referrals Destination Screen'), findsOneWidget);
+    });
+  });
+
+  // NEW: ProfileScreen Widget Tests
+  group('ProfileScreen Widget Tests', () {
+    testWidgets('Renders ProfileScreen UI and user details from mock', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: ProfileScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      // Data driven from profileControllerProvider Mock
+      expect(find.text("Test User"), findsOneWidget);
+      expect(find.text("No bio added yet"), findsOneWidget);
+      expect(find.text("0"), findsNWidgets(2)); // Projects (0) and Minutes (0)
+      expect(find.text("0 MB"), findsOneWidget); // Storage
+
+      // Menu Tiles
+      expect(find.text("Edit Profile"), findsOneWidget);
+      expect(find.text("Account Security"), findsOneWidget);
+      expect(find.text("Support"), findsOneWidget);
+      expect(find.text("Logout"), findsOneWidget);
+    });
+
+    testWidgets('Tapping Edit Profile navigates to edit profile route', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: ProfileScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final editProfileTile = find.text("Edit Profile");
+      await tester.ensureVisible(editProfileTile);
+      await tester.tap(editProfileTile);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Edit Profile Destination Screen'), findsOneWidget);
+    });
+
+    testWidgets(
+      'Tapping Logout triggers logout process and navigates to login',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({});
+
+        await tester.pumpWidget(
+          createRouterTestApp(child: const Scaffold(body: ProfileScreen())),
+        );
+        await tester.pumpAndSettle();
+
+        final logoutTile = find.text("Logout");
+        await tester.ensureVisible(logoutTile);
+        await tester.tap(logoutTile);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Login Destination Screen'), findsOneWidget);
       },
     );
   });
