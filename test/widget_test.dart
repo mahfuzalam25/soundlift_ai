@@ -16,7 +16,7 @@ import 'package:soundlift_ai/features/auth/new_password_screen.dart';
 import 'package:soundlift_ai/features/dashboard/dashboard_screen.dart';
 import 'package:soundlift_ai/features/dashboard/main_layout.dart';
 import 'package:soundlift_ai/features/create/create_screen.dart';
-import 'package:soundlift_ai/features/projects/projects_screen.dart'; // NEW: Imported ProjectsScreen
+import 'package:soundlift_ai/features/projects/projects_screen.dart';
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -573,7 +573,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
-  // NEW: ProjectsScreen Widget Tests
   group('ProjectsScreen Widget Tests', () {
     testWidgets('Renders ProjectsScreen UI headers, search field, and tabs', (
       WidgetTester tester,
@@ -589,9 +588,16 @@ ADMOB_INTERSTITIAL_IOS=test_id
       expect(find.text("Search Project..."), findsOneWidget);
       expect(find.text("Audio"), findsOneWidget);
       expect(find.text("Video"), findsOneWidget);
-      expect(find.text("Processing"), findsOneWidget);
-      expect(find.text("Completed"), findsOneWidget);
-      expect(find.text("Failed"), findsOneWidget);
+
+      // FIX: Use findsNWidgets(2) because "Processing" exists both as a Tab label
+      // and as the status text on 'Sample Video Project'
+      expect(find.text("Processing"), findsNWidgets(2));
+
+      // FIX: Use findsNWidgets(2) because "Completed" exists both as a Tab label
+      // and as the status text on 'Sample Audio Project'
+      expect(find.text("Completed"), findsNWidgets(2));
+
+      expect(find.text("Failed"), findsOneWidget); // Only the tab exists
       expect(find.text("Sample Audio Project"), findsOneWidget);
     });
 
@@ -605,7 +611,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
-      // Find and tap the Audio filter chip
       final audioFilterChip = find.widgetWithText(GestureDetector, "Audio");
       await tester.tap(audioFilterChip);
       await tester.pumpAndSettle();
@@ -624,7 +629,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
         );
         await tester.pumpAndSettle();
 
-        // Tap on the 'Processing' TabBar item
         final processingTab = find.widgetWithText(Tab, "Processing");
         await tester.tap(processingTab);
         await tester.pumpAndSettle();
