@@ -158,71 +158,77 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
 
-            // Quick Access Menu
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              decoration: BoxDecoration(
+            // Quick Access Menu (FIXED: Replaced Container with Material + Padding)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Material(
                 color: AppColors.cards,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.textGrey.withOpacity(0.1)),
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  ProfileMenuTile(
-                    title: "Edit Profile",
-                    icon: Icons.person_outline,
-                    onTap: () => context.push('/profile/edit'),
-                  ),
-                  _buildDivider(),
-                  ProfileMenuTile(
-                    title: "Subscription",
-                    icon: Icons.star_outline,
-                    onTap: () => context.push('/subscription/billing'),
-                  ),
-                  _buildDivider(),
-                  ProfileMenuTile(
-                    title: "Account Security",
-                    icon: Icons.shield_outlined,
-                    onTap: () => context.push('/profile/security'),
-                  ),
-                  _buildDivider(),
-                  ProfileMenuTile(
-                    title: "Settings",
-                    icon: Icons.settings_outlined,
-                    onTap: () => context.push('/settings'),
-                  ),
-                  _buildDivider(),
-                  ProfileMenuTile(
-                    title: "Support",
-                    icon: Icons.help_outline,
-                    onTap: () => context.push('/help'),
-                  ),
-                  const SizedBox(height: 8),
-                ],
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(color: AppColors.textGrey.withOpacity(0.1)),
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    ProfileMenuTile(
+                      title: "Edit Profile",
+                      icon: Icons.person_outline,
+                      onTap: () => context.push('/profile/edit'),
+                    ),
+                    _buildDivider(),
+                    ProfileMenuTile(
+                      title: "Subscription",
+                      icon: Icons.star_outline,
+                      onTap: () => context.push('/subscription/billing'),
+                    ),
+                    _buildDivider(),
+                    ProfileMenuTile(
+                      title: "Account Security",
+                      icon: Icons.shield_outlined,
+                      onTap: () => context.push('/profile/security'),
+                    ),
+                    _buildDivider(),
+                    ProfileMenuTile(
+                      title: "Settings",
+                      icon: Icons.settings_outlined,
+                      onTap: () => context.push('/settings'),
+                    ),
+                    _buildDivider(),
+                    ProfileMenuTile(
+                      title: "Support",
+                      icon: Icons.help_outline,
+                      onTap: () => context.push('/help'),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),
 
-            // Logout Button
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              decoration: BoxDecoration(
+            // Logout Button (FIXED: Replaced Container with Material + Padding)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Material(
                 color: AppColors.cards,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.textGrey.withOpacity(0.1)),
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  ProfileMenuTile(
-                    title: "Logout",
-                    icon: Icons.logout,
-                    isDestructive: true,
-                    onTap: () => _handleLogout(context, ref),
-                  ),
-                  const SizedBox(height: 8),
-                ],
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(color: AppColors.textGrey.withOpacity(0.1)),
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    ProfileMenuTile(
+                      title: "Logout",
+                      icon: Icons.logout,
+                      isDestructive: true,
+                      onTap: () => _handleLogout(context, ref),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 40),
