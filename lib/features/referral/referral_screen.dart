@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/buttons/primary_button.dart';
-import '../../shared/widgets/custom_text_field.dart'; // Ensure this matches your path
+import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/dialogs/custom_snackbar.dart';
 import 'providers/referral_provider.dart';
 

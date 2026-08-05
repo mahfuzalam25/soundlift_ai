@@ -7,6 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:dio/dio.dart';
 import 'package:soundlift_ai/core/network/api_client.dart';
 import 'package:soundlift_ai/features/onboarding/onboarding_screen.dart';
+import 'package:soundlift_ai/features/processing/processing_screen.dart';
 import 'package:soundlift_ai/features/splash/splash_screen.dart';
 import 'package:soundlift_ai/features/auth/login_screen.dart';
 import 'package:soundlift_ai/features/auth/register_screen.dart';
@@ -27,7 +28,7 @@ import 'package:soundlift_ai/features/projects/media_viewer_screen.dart';
 import 'package:soundlift_ai/features/billing/billing_screen.dart';
 import 'package:soundlift_ai/features/editor/video_editor_screen.dart';
 import 'package:soundlift_ai/features/notifications/notifications_screen.dart';
-import 'package:soundlift_ai/features/processing/processing_screen.dart';
+import 'package:soundlift_ai/features/referral/referral_screen.dart'; // NEW: Imported ReferralScreen
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -95,7 +96,7 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/status/')) {
-          // NEW INTERCEPT: Project Processing Status
+          // INTERCEPT: Project Processing Status
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -242,6 +243,29 @@ void setupMockDio() {
                   },
                 ],
               },
+            ),
+          );
+        } else if (path.contains('/referrals/my-code/')) {
+          // NEW INTERCEPT: Referral Data Mock
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: {
+                'code': 'MOCKCODE',
+                'total_referrals': 5,
+                'total_earned_minutes': 250.0,
+                'has_claimed_welcome_reward': false,
+              },
+            ),
+          );
+        } else if (path.contains('/referrals/claim/')) {
+          // NEW INTERCEPT: Referral Claim Post Action Mock
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: {'message': 'Referral claimed successfully'},
             ),
           );
         }
@@ -1211,7 +1235,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
-  // NEW: NotificationsScreen Widget Tests
   group('NotificationsScreen Widget Tests', () {
     testWidgets('Renders NotificationsScreen UI and mock notifications', (
       WidgetTester tester,
@@ -1276,7 +1299,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
-  // NEW: ProcessingScreen Widget Tests
   group('ProcessingScreen Widget Tests', () {
     testWidgets(
       'Renders ProcessingScreen and transitions from Processing to Success',
@@ -1356,6 +1378,87 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpAndSettle();
 
       expect(find.text('Project Overview Screen'), findsOneWidget);
+    });
+  });
+
+  // NEW: ReferralScreen Widget Tests
+  group('ReferralScreen Widget Tests', () {
+    testWidgets('Renders ReferralScreen UI elements and reads mock data', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: ReferralScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Refer & Earn"), findsOneWidget);
+      expect(find.text("Invite Friends,\nEarn Free Minutes"), findsOneWidget);
+      expect(find.text("Your Unique Referral Code"), findsOneWidget);
+
+      // Values drawn from Mock API
+      expect(find.text("MOCKCODE"), findsOneWidget);
+      expect(find.text("5"), findsOneWidget); // Total Referrals
+      expect(find.text("250"), findsOneWidget); // Total Earned Minutes
+    });
+
+    testWidgets(
+      'Shows validation Snackbar when submitting an empty claim code',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({});
+        await tester.pumpWidget(
+          createRouterTestApp(child: const Scaffold(body: ReferralScreen())),
+        );
+        await tester.pumpAndSettle();
+
+        final claimBtn = find.text("Claim Reward");
+        await tester.ensureVisible(claimBtn);
+        await tester.tap(claimBtn);
+        await tester.pump(); // Get first frame of Snackbar
+
+        expect(find.text("Please enter a code"), findsOneWidget);
+      },
+    );
+
+    testWidgets('Shows success Snackbar when claiming a valid code', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: ReferralScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final codeField = find.byType(EditableText);
+      await tester.enterText(codeField.first, "VALIDCODE");
+
+      final claimBtn = find.text("Claim Reward");
+      await tester.ensureVisible(claimBtn);
+      await tester.tap(claimBtn);
+      await tester
+          .pump(); // Wait for the AsyncValue to update and trigger listener
+
+      expect(
+        find.text("Referral code claimed! You earned 50 free minutes."),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('Tapping Copy Link shows copied to clipboard Snackbar', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: ReferralScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final copyBtn = find.text("Copy Link");
+      await tester.ensureVisible(copyBtn);
+      await tester.tap(copyBtn);
+      await tester.pump(); // Get first frame of Snackbar
+
+      expect(find.text("Referral link copied to clipboard!"), findsOneWidget);
     });
   });
 }
