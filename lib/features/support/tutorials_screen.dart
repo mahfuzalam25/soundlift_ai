@@ -92,6 +92,14 @@ class TutorialsScreen extends ConsumerWidget {
                                 ? Image.network(
                                     'https://img.youtube.com/vi/${tutorial.youtubeId}/hqdefault.jpg',
                                     fit: BoxFit.cover,
+                                    // FIX: Added errorBuilder to handle missing network in test environments gracefully
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(
+                                              Icons.video_library,
+                                              size: 64,
+                                              color: AppColors.textGrey,
+                                            ),
                                   )
                                 : const Icon(
                                     Icons.video_library,
