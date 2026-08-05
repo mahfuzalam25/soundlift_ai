@@ -1447,6 +1447,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
         find.text("Referral code claimed! You earned 50 free minutes."),
         findsOneWidget,
       );
+
+      // FIX: Flush the pending API requests triggered by provider invalidation
+      await tester.pumpAndSettle();
     });
 
     testWidgets('Tapping Copy Link shows copied to clipboard Snackbar', (
