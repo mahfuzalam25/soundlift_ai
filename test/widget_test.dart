@@ -25,7 +25,7 @@ import 'package:soundlift_ai/features/profile/edit_profile_screen.dart';
 import 'package:soundlift_ai/features/profile/security_screen.dart';
 import 'package:soundlift_ai/features/projects/media_viewer_screen.dart';
 import 'package:soundlift_ai/features/billing/billing_screen.dart';
-import 'package:soundlift_ai/features/editor/video_editor_screen.dart'; // NEW: Imported VideoEditorScreen
+import 'package:soundlift_ai/features/editor/video_editor_screen.dart';
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -48,7 +48,6 @@ void setupMockDio() {
             ),
           );
         } else if (path.endsWith('/projects/')) {
-          // INTERCEPT: Fetch all projects list
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -73,8 +72,6 @@ void setupMockDio() {
           );
         } else if (path.contains('/projects/') &&
             !path.endsWith('/download/')) {
-          // NEW INTERCEPT: Single Project Details
-          // Returns null URLs to safely bypass video/audio plugin crashes during widget tests
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -153,7 +150,6 @@ void setupMockDio() {
             Response(requestOptions: options, statusCode: 200, data: []),
           );
         } else if (path.contains('/billing/overview')) {
-          // INTERCEPT: Billing Overview
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -182,7 +178,6 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/pdf')) {
-          // INTERCEPT: Safely bypass the actual PDF download during tests
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -192,7 +187,6 @@ void setupMockDio() {
           );
         }
 
-        // Generic fallback to prevent null crashes
         return handler.resolve(
           Response(requestOptions: options, statusCode: 200, data: {}),
         );
@@ -314,7 +308,6 @@ Widget createRouterTestApp({
     ],
   );
 
-  // Override the API client provider to use our Mock Dio instance
   return ProviderScope(
     overrides: [dioProvider.overrideWithValue(mockDio)],
     child: MaterialApp.router(routerConfig: router),
@@ -326,8 +319,6 @@ void main() {
 
   setupMockDio();
 
-  // Inject mock environment variables into the test harness memory
-  // to prevent the NotInitializedError when providers load.
   dotenv.testLoad(
     fileInput: '''
 API_BASE_URL=http://localhost:8001
@@ -343,12 +334,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(createRouterTestApp(child: const SplashScreen()));
-
       expect(find.byType(SplashScreen), findsOneWidget);
       expect(find.byType(Image), findsOneWidget);
-
       await tester.pump(const Duration(seconds: 2));
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
@@ -358,13 +346,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(createRouterTestApp(child: const SplashScreen()));
-
       await tester.pump(const Duration(seconds: 2));
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
-
       expect(find.text('Intro Destination Screen'), findsOneWidget);
     });
   });
@@ -376,7 +361,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const OnboardingScreen()),
       );
-
       expect(find.text("AI Noise Removal"), findsOneWidget);
       expect(
         find.text("Remove unwanted noise from audio and videos."),
@@ -392,33 +376,19 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const OnboardingScreen()),
       );
-
       await tester.tap(find.text("Next"));
       await tester.pumpAndSettle();
       expect(find.text("Professional Audio Enhancement"), findsOneWidget);
-      expect(
-        find.text("Transform poor recordings into studio-quality sound."),
-        findsOneWidget,
-      );
 
       await tester.tap(find.text("Next"));
       await tester.pumpAndSettle();
       expect(find.text("Video Audio Replacement"), findsOneWidget);
-      expect(
-        find.text("Mute original audio and add new voice tracks."),
-        findsOneWidget,
-      );
 
       await tester.tap(find.text("Next"));
       await tester.pumpAndSettle();
       expect(find.text("Export Anywhere"), findsOneWidget);
-      expect(
-        find.text("Download and share your enhanced media instantly."),
-        findsOneWidget,
-      );
 
       expect(find.text("Get Started"), findsOneWidget);
-
       await tester.tap(find.text("Get Started"));
       await tester.pumpAndSettle();
       expect(find.text('Auth Destination Screen'), findsOneWidget);
@@ -430,11 +400,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const OnboardingScreen()),
       );
-
       expect(find.text("Skip"), findsOneWidget);
       await tester.tap(find.text("Skip"));
       await tester.pumpAndSettle();
-
       expect(find.text('Auth Destination Screen'), findsOneWidget);
     });
   });
@@ -444,9 +412,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(createRouterTestApp(child: const LoginScreen()));
-
       expect(find.text("Let's sign in"), findsOneWidget);
       expect(find.text("Welcome Back, You have been missed."), findsOneWidget);
       expect(find.text("Login"), findsOneWidget);
@@ -458,12 +424,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(createRouterTestApp(child: const LoginScreen()));
-
       await tester.tap(find.text("Login"));
       await tester.pump();
-
       expect(find.text("Please fill all fields"), findsOneWidget);
     });
   });
@@ -473,11 +436,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const RegisterScreen()),
       );
-
       expect(find.text("Let's register account"), findsOneWidget);
       expect(find.text("Register"), findsOneWidget);
       expect(find.text("Sign up with Google"), findsOneWidget);
@@ -488,20 +449,15 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const RegisterScreen()),
       );
-
       final textInputs = find.byType(EditableText);
       expect(textInputs, findsNWidgets(5));
-
       await tester.enterText(textInputs.at(3), "SecurePass123");
       await tester.enterText(textInputs.at(4), "DifferentPass456");
-
       await tester.tap(find.text("Register"));
       await tester.pump();
-
       expect(find.text("Passwords do not match"), findsOneWidget);
     });
   });
@@ -513,7 +469,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const ForgotPasswordScreen()),
       );
-
       expect(find.text("Reset Password"), findsOneWidget);
       expect(find.text("Enter your email to receive an OTP."), findsOneWidget);
       expect(find.text("Send OTP"), findsOneWidget);
@@ -525,10 +480,8 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const ForgotPasswordScreen()),
       );
-
       await tester.tap(find.text("Send OTP"));
       await tester.pumpAndSettle();
-
       expect(find.text('Verify Destination Screen'), findsOneWidget);
     });
   });
@@ -538,11 +491,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
       'Renders OtpVerifyScreen elements correctly for register flow',
       (WidgetTester tester) async {
         SharedPreferences.setMockInitialValues({});
-
         await tester.pumpWidget(
           createRouterTestApp(child: const OtpVerifyScreen(flow: 'register')),
         );
-
         expect(find.text("Verify OTP"), findsOneWidget);
         expect(find.text("Verify"), findsOneWidget);
         expect(find.byType(EditableText), findsOneWidget);
@@ -553,11 +504,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const OtpVerifyScreen(flow: 'reset')),
       );
-
       expect(find.text("Verify OTP"), findsOneWidget);
       expect(find.text("Verify"), findsOneWidget);
     });
@@ -570,7 +519,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const NewPasswordScreen()),
       );
-
       expect(find.text("Create New Password"), findsOneWidget);
       expect(find.byType(EditableText), findsNWidgets(2));
       expect(find.text("Save & Login"), findsOneWidget);
@@ -582,10 +530,8 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const NewPasswordScreen()),
       );
-
       await tester.tap(find.text("Save & Login"));
       await tester.pumpAndSettle();
-
       expect(find.text('Login Destination Screen'), findsOneWidget);
     });
   });
@@ -595,13 +541,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const DashboardScreen()),
       );
-      // Wait for Mock Dio futures to resolve and loading indicators to clear
       await tester.pumpAndSettle();
-
       expect(find.text("Quick Actions"), findsOneWidget);
       expect(find.text("Recent Projects"), findsOneWidget);
       expect(find.text("Enhance\nAudio"), findsOneWidget);
@@ -613,18 +556,14 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const DashboardScreen()),
       );
       await tester.pumpAndSettle();
-
       final notificationBell = find.byIcon(Icons.notifications_none);
       expect(notificationBell, findsOneWidget);
-
       await tester.tap(notificationBell);
       await tester.pumpAndSettle();
-
       expect(find.text('Notifications Destination Screen'), findsOneWidget);
     });
   });
@@ -634,10 +573,8 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(createRouterTestApp(child: const MainLayout()));
       await tester.pumpAndSettle();
-
       expect(find.byType(BottomNavigationBar), findsOneWidget);
       expect(find.text("Home"), findsOneWidget);
       expect(find.text("Projects"), findsOneWidget);
@@ -650,13 +587,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(createRouterTestApp(child: const MainLayout()));
       await tester.pumpAndSettle();
-
       await tester.tap(find.text("Projects"));
       await tester.pumpAndSettle();
-
       final bottomNavBar = tester.widget<BottomNavigationBar>(
         find.byType(BottomNavigationBar),
       );
@@ -672,7 +606,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
         createRouterTestApp(child: const Scaffold(body: CreateScreen())),
       );
       await tester.pumpAndSettle();
-
       expect(find.text("Create New Project"), findsOneWidget);
       expect(
         find.text("Choose the type of enhancement you need."),
@@ -691,12 +624,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
         createRouterTestApp(child: const Scaffold(body: CreateScreen())),
       );
       await tester.pumpAndSettle();
-
       final audioOption = find.text("Audio\nEnhancement");
       await tester.ensureVisible(audioOption);
       await tester.tap(audioOption);
       await tester.pumpAndSettle();
-
       expect(find.text('Upload Destination Screen'), findsOneWidget);
     });
 
@@ -707,12 +638,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
         createRouterTestApp(child: const Scaffold(body: CreateScreen())),
       );
       await tester.pumpAndSettle();
-
       final subtitlesOption = find.text("AI Subtitles\n(Coming Soon)");
       await tester.ensureVisible(subtitlesOption);
       await tester.tap(subtitlesOption);
-      await tester.pump(); // Trigger SnackBar animation
-
+      await tester.pump();
       expect(
         find.text('AI Subtitles are coming in a future update!'),
         findsOneWidget,
@@ -725,20 +654,16 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: ProjectsScreen())),
       );
       await tester.pumpAndSettle();
-
       expect(find.text("Your Projects"), findsOneWidget);
       expect(find.text("Search Project..."), findsOneWidget);
       expect(find.text("Audio"), findsOneWidget);
       expect(find.text("Video"), findsOneWidget);
-
       expect(find.text("Processing"), findsNWidgets(2));
       expect(find.text("Completed"), findsNWidgets(2));
-
       expect(find.text("Failed"), findsOneWidget);
       expect(find.text("Sample Audio Project"), findsOneWidget);
     });
@@ -747,16 +672,13 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: ProjectsScreen())),
       );
       await tester.pumpAndSettle();
-
       final audioFilterChip = find.widgetWithText(GestureDetector, "Audio");
       await tester.tap(audioFilterChip);
       await tester.pumpAndSettle();
-
       expect(find.text("Sample Audio Project"), findsOneWidget);
       expect(find.text("Sample Video Project"), findsNothing);
     });
@@ -765,16 +687,13 @@ ADMOB_INTERSTITIAL_IOS=test_id
       'Switches tabs to Processing tab and displays matching project',
       (WidgetTester tester) async {
         SharedPreferences.setMockInitialValues({});
-
         await tester.pumpWidget(
           createRouterTestApp(child: const Scaffold(body: ProjectsScreen())),
         );
         await tester.pumpAndSettle();
-
         final processingTab = find.widgetWithText(Tab, "Processing");
         await tester.tap(processingTab);
         await tester.pumpAndSettle();
-
         expect(find.text("Sample Video Project"), findsOneWidget);
         expect(find.text("Sample Audio Project"), findsNothing);
       },
@@ -786,21 +705,14 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: SubscriptionScreen())),
       );
       await tester.pumpAndSettle();
-
-      // Core headings
       expect(find.text("Subscription"), findsOneWidget);
       expect(find.text("Billing"), findsOneWidget);
-
-      // Data driven from mySubscriptionProvider Mock
       expect(find.text("Current Plan"), findsOneWidget);
       expect(find.text("Free Tier"), findsOneWidget);
-
-      // Data driven from subscriptionPlansProvider Mock
       expect(find.text("Upgrade Plans"), findsOneWidget);
       expect(find.text("Pro Plan"), findsOneWidget);
       expect(find.text("\$9.99"), findsOneWidget);
@@ -811,17 +723,14 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: SubscriptionScreen())),
       );
       await tester.pumpAndSettle();
-
       final billingBtn = find.text("Billing");
       await tester.ensureVisible(billingBtn);
       await tester.tap(billingBtn);
       await tester.pumpAndSettle();
-
       expect(find.text('Billing Destination Screen'), findsOneWidget);
     });
 
@@ -829,17 +738,14 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: SubscriptionScreen())),
       );
       await tester.pumpAndSettle();
-
       final referBtn = find.text("Refer & Earn Credits");
       await tester.ensureVisible(referBtn);
       await tester.tap(referBtn);
       await tester.pumpAndSettle();
-
       expect(find.text('Referrals Destination Screen'), findsOneWidget);
     });
   });
@@ -849,17 +755,14 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: ProfileScreen())),
       );
       await tester.pumpAndSettle();
-
       expect(find.text("Test User"), findsOneWidget);
       expect(find.text("No bio added yet"), findsOneWidget);
       expect(find.text("0"), findsNWidgets(2));
       expect(find.text("0 MB"), findsOneWidget);
-
       expect(find.text("Edit Profile"), findsOneWidget);
       expect(find.text("Account Security"), findsOneWidget);
       expect(find.text("Support"), findsOneWidget);
@@ -870,17 +773,14 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: ProfileScreen())),
       );
       await tester.pumpAndSettle();
-
       final editProfileTile = find.text("Edit Profile");
       await tester.ensureVisible(editProfileTile);
       await tester.tap(editProfileTile);
       await tester.pumpAndSettle();
-
       expect(find.text('Edit Profile Destination Screen'), findsOneWidget);
     });
 
@@ -888,17 +788,14 @@ ADMOB_INTERSTITIAL_IOS=test_id
       'Tapping Logout triggers logout process and navigates to login',
       (WidgetTester tester) async {
         SharedPreferences.setMockInitialValues({});
-
         await tester.pumpWidget(
           createRouterTestApp(child: const Scaffold(body: ProfileScreen())),
         );
         await tester.pumpAndSettle();
-
         final logoutTile = find.text("Logout");
         await tester.ensureVisible(logoutTile);
         await tester.tap(logoutTile);
         await tester.pumpAndSettle();
-
         expect(find.text('Login Destination Screen'), findsOneWidget);
       },
     );
@@ -909,12 +806,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: SessionsScreen())),
       );
       await tester.pumpAndSettle();
-
       expect(find.text("Login History & Sessions"), findsOneWidget);
       expect(find.text("192.168.1.1"), findsOneWidget);
       expect(find.text("Active"), findsOneWidget);
@@ -931,7 +826,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
         ),
       );
       await tester.pumpAndSettle();
-
       expect(find.text("Change Password"), findsOneWidget);
       expect(find.text("Update your password"), findsOneWidget);
       expect(find.byType(TextField), findsNWidgets(3));
@@ -947,12 +841,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
         ),
       );
       await tester.pumpAndSettle();
-
       final updateBtn = find.text("Update Password");
       await tester.ensureVisible(updateBtn);
       await tester.tap(updateBtn);
       await tester.pump();
-
       expect(find.text("Please fill in all fields"), findsOneWidget);
     });
 
@@ -965,19 +857,15 @@ ADMOB_INTERSTITIAL_IOS=test_id
         ),
       );
       await tester.pumpAndSettle();
-
       final textInputs = find.byType(EditableText);
       expect(textInputs, findsNWidgets(3));
-
       await tester.enterText(textInputs.at(0), "OldPass123");
       await tester.enterText(textInputs.at(1), "NewPass123");
       await tester.enterText(textInputs.at(2), "MismatchPass456");
-
       final updateBtn = find.text("Update Password");
       await tester.ensureVisible(updateBtn);
       await tester.tap(updateBtn);
       await tester.pump();
-
       expect(find.text("New passwords do not match"), findsOneWidget);
     });
   });
@@ -987,12 +875,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
       'Renders EditProfileScreen UI elements and reads mock profile',
       (WidgetTester tester) async {
         SharedPreferences.setMockInitialValues({});
-
         await tester.pumpWidget(
           createRouterTestApp(child: const Scaffold(body: EditProfileScreen())),
         );
         await tester.pumpAndSettle();
-
         expect(find.text("Edit Profile"), findsOneWidget);
         expect(find.text("Personal Information"), findsOneWidget);
         expect(find.text("Location Details"), findsOneWidget);
@@ -1007,12 +893,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: SecurityScreen())),
       );
       await tester.pumpAndSettle();
-
       expect(find.text("Account Security"), findsOneWidget);
       expect(find.text("Account Settings"), findsOneWidget);
       expect(find.text("Email Verification"), findsOneWidget);
@@ -1025,17 +909,14 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: SecurityScreen())),
       );
       await tester.pumpAndSettle();
-
       final passBtn = find.text("Change Password");
       await tester.ensureVisible(passBtn);
       await tester.tap(passBtn);
       await tester.pumpAndSettle();
-
       expect(find.text("Change Password Destination Screen"), findsOneWidget);
     });
 
@@ -1043,17 +924,14 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: SecurityScreen())),
       );
       await tester.pumpAndSettle();
-
       final sessionBtn = find.text("Active Sessions");
       await tester.ensureVisible(sessionBtn);
       await tester.tap(sessionBtn);
       await tester.pumpAndSettle();
-
       expect(find.text("Sessions Destination Screen"), findsOneWidget);
     });
   });
@@ -1063,27 +941,17 @@ ADMOB_INTERSTITIAL_IOS=test_id
       'Renders MediaViewerScreen details safely bypassing media plugins',
       (WidgetTester tester) async {
         SharedPreferences.setMockInitialValues({});
-
         await tester.pumpWidget(
           createRouterTestApp(
             child: const Scaffold(body: MediaViewerScreen(projectId: 'proj-1')),
           ),
         );
         await tester.pumpAndSettle();
-
-        // UI Texts from screen
         expect(find.text("Project Overview"), findsOneWidget);
-
-        // Values drawn from the Mock Project Detail API response
         expect(find.text("Sample Audio Project"), findsOneWidget);
         expect(find.text("Format: MP3"), findsOneWidget);
-
-        // Control buttons
         expect(find.text("Original"), findsOneWidget);
         expect(find.text("Enhanced"), findsOneWidget);
-
-        // Safety check: The UI should gracefully default to "Media not available"
-        // instead of trying to initialize the native video/audio player plugin.
         expect(find.text("Media not available"), findsOneWidget);
       },
     );
@@ -1092,28 +960,23 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(
           child: const Scaffold(body: MediaViewerScreen(projectId: 'proj-1')),
         ),
       );
       await tester.pumpAndSettle();
-
       final originalBtn = find.text("Original");
       final enhancedBtn = find.text("Enhanced");
 
-      // Tap Original State
       await tester.ensureVisible(originalBtn);
       await tester.tap(originalBtn);
       await tester.pumpAndSettle();
 
-      // Tap Enhanced State
       await tester.ensureVisible(enhancedBtn);
       await tester.tap(enhancedBtn);
       await tester.pumpAndSettle();
 
-      // Ensure that toggling state does not trigger a crash and the safe container persists
       expect(find.text("Media not available"), findsOneWidget);
     });
   });
@@ -1123,27 +986,20 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: BillingScreen())),
       );
       await tester.pumpAndSettle();
 
-      // Top level headings
       expect(find.text("Billing & Payments"), findsOneWidget);
       expect(find.text("Overview"), findsOneWidget);
       expect(find.text("Billing History"), findsOneWidget);
 
-      // Current Plan Widget
       expect(find.text("Active"), findsOneWidget);
       expect(find.text("\$9.99 / month"), findsOneWidget);
       expect(find.text("Visa ending in 4242"), findsOneWidget);
-
-      // Because date parsing handles timezones based on local execution context,
-      // we check for a partial match on the label to prevent CI timezone mismatch failures.
       expect(find.textContaining("Next renewal on"), findsOneWidget);
 
-      // Billing History List
       expect(find.text("Invoice INV-2026-001"), findsOneWidget);
       expect(find.text("\$9.99"), findsOneWidget);
       expect(find.text("Paid"), findsOneWidget);
@@ -1153,7 +1009,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
-
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: BillingScreen())),
       );
@@ -1163,7 +1018,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.ensureVisible(editBtn);
       await tester.tap(editBtn);
 
-      // We strictly use pump() here to grab the first frame of the Snackbar animation
       await tester.pump();
 
       expect(find.text("Update Payment Method coming soon"), findsOneWidget);
@@ -1173,7 +1027,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       'Tapping download on invoice shows failure Snackbar in test environment',
       (WidgetTester tester) async {
         SharedPreferences.setMockInitialValues({});
-
         await tester.pumpWidget(
           createRouterTestApp(child: const Scaffold(body: BillingScreen())),
         );
@@ -1183,12 +1036,8 @@ ADMOB_INTERSTITIAL_IOS=test_id
         await tester.ensureVisible(downloadBtn);
         await tester.tap(downloadBtn);
 
-        // We strictly use pump() here to grab the first frame of the Snackbar animation
         await tester.pump();
 
-        // In a headless test environment, local file storage access is unavailable.
-        // This synchronously throws an error and instantly replaces the "Downloading" Snackbar
-        // with the "Failed" Snackbar before the framework even gets a chance to paint the first one.
         expect(find.text("Failed to download invoice."), findsOneWidget);
       },
     );

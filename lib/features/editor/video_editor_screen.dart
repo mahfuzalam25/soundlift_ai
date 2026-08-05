@@ -667,203 +667,218 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 24),
               color: AppColors.background,
-              child: ListView(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(
-                      "Video Sequence",
-                      style: TextStyle(color: AppColors.textGrey, fontSize: 12),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 60,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: _videoClips.length,
-                      itemBuilder: (ctx, i) => _buildClipCard(
-                        _videoClips[i].media['name'],
-                        Icons.video_file,
-                        AppColors.primary,
-                        isActive: _editingVideo && _activeIndex == i,
-                        onTap: () => _loadPreview(true, i),
+              // FIX: Replaced ListView with SingleChildScrollView to prevent lazy loading in tests
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        "Video Sequence",
+                        style: TextStyle(
+                          color: AppColors.textGrey,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(
-                      "Audio Sequence",
-                      style: TextStyle(color: AppColors.textGrey, fontSize: 12),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 60,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: _audioClips.length,
-                      itemBuilder: (ctx, i) => _buildClipCard(
-                        _audioClips[i].media['name'],
-                        Icons.audio_file,
-                        AppColors.accent,
-                        isActive: !_editingVideo && _activeIndex == i,
-                        onTap: () => _loadPreview(false, i),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 60,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        itemCount: _videoClips.length,
+                        itemBuilder: (ctx, i) => _buildClipCard(
+                          _videoClips[i].media['name'],
+                          Icons.video_file,
+                          AppColors.primary,
+                          isActive: _editingVideo && _activeIndex == i,
+                          onTap: () => _loadPreview(true, i),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(
-                      "Background Music",
-                      style: TextStyle(color: AppColors.textGrey, fontSize: 12),
+                    const SizedBox(height: 24),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        "Audio Sequence",
+                        style: TextStyle(
+                          color: AppColors.textGrey,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: _bgmUrl == null
-                        ? OutlinedButton.icon(
-                            onPressed: _openMusicLibrary,
-                            icon: const Icon(
-                              Icons.music_note,
-                              color: Colors.white,
-                            ),
-                            label: const Text(
-                              "Add Background Music",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              side: BorderSide(
-                                color: AppColors.textGrey.withOpacity(0.3),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 60,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        itemCount: _audioClips.length,
+                        itemBuilder: (ctx, i) => _buildClipCard(
+                          _audioClips[i].media['name'],
+                          Icons.audio_file,
+                          AppColors.accent,
+                          isActive: !_editingVideo && _activeIndex == i,
+                          onTap: () => _loadPreview(false, i),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        "Background Music",
+                        style: TextStyle(
+                          color: AppColors.textGrey,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: _bgmUrl == null
+                          ? OutlinedButton.icon(
+                              onPressed: _openMusicLibrary,
+                              icon: const Icon(
+                                Icons.music_note,
+                                color: Colors.white,
                               ),
-                              shape: RoundedRectangleBorder(
+                              label: const Text(
+                                "Add Background Music",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                side: BorderSide(
+                                  color: AppColors.textGrey.withOpacity(0.3),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            )
+                          : Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.cards,
                                 borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.greenAccent.withOpacity(0.5),
+                                ),
                               ),
-                            ),
-                          )
-                        : Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.cards,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.greenAccent.withOpacity(0.5),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          icon: Icon(
-                                            _isBgmPlaying
-                                                ? Icons.pause_circle_filled
-                                                : Icons.play_circle_filled,
-                                            color: Colors.greenAccent,
-                                          ),
-                                          onPressed: () {
-                                            setState(
-                                              () => _isBgmPlaying =
-                                                  !_isBgmPlaying,
-                                            );
-                                            _isBgmPlaying
-                                                ? _bgmPlayer.play()
-                                                : _bgmPlayer.pause();
-                                          },
-                                        ),
-                                        const SizedBox(width: 8),
-                                        SizedBox(
-                                          width: 150,
-                                          child: Text(
-                                            _bgmTitle ?? "BGM Track",
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(
+                                              _isBgmPlaying
+                                                  ? Icons.pause_circle_filled
+                                                  : Icons.play_circle_filled,
+                                              color: Colors.greenAccent,
                                             ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                            onPressed: () {
+                                              setState(
+                                                () => _isBgmPlaying =
+                                                    !_isBgmPlaying,
+                                              );
+                                              _isBgmPlaying
+                                                  ? _bgmPlayer.play()
+                                                  : _bgmPlayer.pause();
+                                            },
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.search,
-                                            color: AppColors.textGrey,
-                                            size: 20,
+                                          const SizedBox(width: 8),
+                                          SizedBox(
+                                            width: 150,
+                                            child: Text(
+                                              _bgmTitle ?? "BGM Track",
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
-                                          onPressed: _openMusicLibrary,
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.delete,
-                                            color: Colors.redAccent,
-                                            size: 20,
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.search,
+                                              color: AppColors.textGrey,
+                                              size: 20,
+                                            ),
+                                            onPressed: _openMusicLibrary,
                                           ),
-                                          onPressed: () {
-                                            _bgmPlayer.stop();
-                                            setState(() {
-                                              _bgmUrl = null;
-                                              _bgmTitle = null;
-                                              _isBgmPlaying = false;
-                                            });
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.delete,
+                                              color: Colors.redAccent,
+                                              size: 20,
+                                            ),
+                                            onPressed: () {
+                                              _bgmPlayer.stop();
+                                              setState(() {
+                                                _bgmUrl = null;
+                                                _bgmTitle = null;
+                                                _isBgmPlaying = false;
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.volume_down,
+                                        color: AppColors.textGrey,
+                                        size: 16,
+                                      ),
+                                      Expanded(
+                                        child: Slider(
+                                          activeColor: Colors.greenAccent,
+                                          inactiveColor: AppColors.textGrey
+                                              .withOpacity(0.2),
+                                          value: _bgmVolume,
+                                          min: 0.0,
+                                          max: 1.0,
+                                          onChanged: (val) {
+                                            setState(() => _bgmVolume = val);
+                                            _bgmPlayer.setVolume(val);
                                           },
                                         ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.volume_down,
-                                      color: AppColors.textGrey,
-                                      size: 16,
-                                    ),
-                                    Expanded(
-                                      child: Slider(
-                                        activeColor: Colors.greenAccent,
-                                        inactiveColor: AppColors.textGrey
-                                            .withOpacity(0.2),
-                                        value: _bgmVolume,
-                                        min: 0.0,
-                                        max: 1.0,
-                                        onChanged: (val) {
-                                          setState(() => _bgmVolume = val);
-                                          _bgmPlayer.setVolume(val);
-                                        },
                                       ),
-                                    ),
-                                    Text(
-                                      "${(_bgmVolume * 100).toInt()}%",
-                                      style: const TextStyle(
-                                        color: AppColors.textGrey,
-                                        fontSize: 12,
+                                      Text(
+                                        "${(_bgmVolume * 100).toInt()}%",
+                                        style: const TextStyle(
+                                          color: AppColors.textGrey,
+                                          fontSize: 12,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                  ),
-                  const SizedBox(height: 40),
-                ],
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
           ),
