@@ -1985,16 +1985,17 @@ ADMOB_INTERSTITIAL_IOS=test_id
 
       final submitBtn = find.text("Submit for Processing");
       await tester.ensureVisible(submitBtn);
-      await tester.tap(submitBtn);
 
+      await tester.tap(submitBtn);
       await tester.pump(); // frame for snackbar
       await tester.pump(const Duration(milliseconds: 50)); // allow animation
-      await tester.pump();
 
       expect(find.text("Please enter a project name."), findsOneWidget);
 
-      // Hide snackbar
+      // Hide snackbar fully
       await tester.pump(const Duration(seconds: 4));
+      await tester
+          .pumpAndSettle(); // FIX: Clear the queue before next interaction
 
       // Enter text and try again
       await tester.enterText(find.byType(TextField), "My Audio Project");
@@ -2002,7 +2003,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
 
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      await tester.pump();
 
       expect(find.text("Please select a file first"), findsOneWidget);
     });
@@ -2041,22 +2041,23 @@ ADMOB_INTERSTITIAL_IOS=test_id
 
       final continueBtn = find.text("Continue to Editor");
       await tester.ensureVisible(continueBtn);
-      await tester.tap(continueBtn);
 
+      await tester.tap(continueBtn);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      await tester.pump();
 
       expect(find.text("Please enter a project name"), findsOneWidget);
 
-      await tester.pump(const Duration(seconds: 4)); // Hide snackbar
+      // Hide snackbar fully
+      await tester.pump(const Duration(seconds: 4));
+      await tester
+          .pumpAndSettle(); // FIX: Clear the queue before next interaction
 
       await tester.enterText(find.byType(TextField), "My Video Project");
       await tester.tap(continueBtn);
 
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      await tester.pump();
 
       expect(find.text("Add at least one video"), findsOneWidget);
     });
@@ -2089,9 +2090,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.tap(listTile);
       await tester.pumpAndSettle();
 
-      // Bottom sheet should close, and the file card should be visible
+      // Bottom sheet should close, and the file card should be visible.
+      // FIX: ReplaceAudioUploadScreen doesn't show "Format" in its UI, it only shows "Size"
       expect(find.textContaining("Size: 0 B"), findsOneWidget);
-      expect(find.textContaining("Format: MP3"), findsOneWidget);
     });
 
     testWidgets('Tapping video cloud download shows empty state Snackbar', (
