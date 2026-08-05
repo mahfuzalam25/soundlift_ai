@@ -36,6 +36,9 @@ import 'package:soundlift_ai/features/support/faq_screen.dart';
 import 'package:soundlift_ai/features/support/docs_screen.dart';
 import 'package:soundlift_ai/features/support/tutorials_screen.dart';
 import 'package:soundlift_ai/features/support/contact_support_screen.dart';
+// NEW: Upload screens imports
+import 'package:soundlift_ai/features/upload/upload_screen.dart';
+import 'package:soundlift_ai/features/upload/replace_audio_upload_screen.dart';
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -508,6 +511,12 @@ Widget createRouterTestApp({
         path: '/help/tutorials/player/:id',
         builder: (context, state) =>
             const Scaffold(body: Text('Tutorial Player Destination Screen')),
+      ),
+      // NEW: Support destinations
+      GoRoute(
+        path: '/editor/video',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Video Editor Destination Screen')),
       ),
       ...?additionalRoutes,
     ],
@@ -1674,7 +1683,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
-  // NEW: Support Folder Widget Tests
   group('HelpScreen Widget Tests', () {
     testWidgets('Renders HelpScreen UI elements correctly', (
       WidgetTester tester,
@@ -1703,7 +1711,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
-      // FIX: Ensure card is in viewport before tapping
       final faqCard = find.text("FAQ");
       await tester.ensureVisible(faqCard);
       await tester.tap(faqCard);
@@ -1720,7 +1727,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
-      // FIX: Ensure card is in viewport before tapping
       final tutorialsCard = find.text("Tutorials");
       await tester.ensureVisible(tutorialsCard);
       await tester.tap(tutorialsCard);
@@ -1737,7 +1743,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
-      // FIX: Ensure card is in viewport before tapping to prevent offstage Offset error
       final docsCard = find.text("Documentation");
       await tester.ensureVisible(docsCard);
       await tester.tap(docsCard);
@@ -1943,5 +1948,157 @@ ADMOB_INTERSTITIAL_IOS=test_id
             .pumpAndSettle(); // Flush network invalidation timers safely
       },
     );
+  });
+
+  // NEW: UploadScreen Widget Tests
+  group('UploadScreen Widget Tests', () {
+    testWidgets('Renders UploadScreen UI elements correctly', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: UploadScreen(type: 'audio_enhancement')),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Upload Media"), findsOneWidget);
+      expect(find.text("Project Details"), findsOneWidget);
+      expect(find.text("Project Name"), findsOneWidget);
+      expect(find.text("Tap to Browse Files"), findsOneWidget);
+      expect(find.text("Submit for Processing"), findsOneWidget);
+    });
+
+    testWidgets('Shows validation Snackbars for empty submissions', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: UploadScreen(type: 'audio_enhancement')),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final submitBtn = find.text("Submit for Processing");
+      await tester.ensureVisible(submitBtn);
+      await tester.tap(submitBtn);
+      await tester.pump(); // frame for snackbar
+
+      expect(find.text("Please enter a project name."), findsOneWidget);
+
+      // Hide snackbar
+      await tester.pump(const Duration(seconds: 4));
+
+      // Enter text and try again
+      await tester.enterText(find.byType(TextField), "My Audio Project");
+      await tester.tap(submitBtn);
+      await tester.pump();
+
+      expect(find.text("Please select a file first"), findsOneWidget);
+    });
+  });
+
+  // NEW: ReplaceAudioUploadScreen Widget Tests
+  group('ReplaceAudioUploadScreen Widget Tests', () {
+    testWidgets('Renders ReplaceAudioUploadScreen UI elements', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: ReplaceAudioUploadScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Media Library"), findsOneWidget);
+      expect(find.text("Project Name"), findsOneWidget);
+      expect(find.text("1. Videos"), findsOneWidget);
+      expect(find.text("2. Audio Tracks"), findsOneWidget);
+      expect(find.text("Continue to Editor"), findsOneWidget);
+    });
+
+    testWidgets('Shows validation Snackbars for empty submissions', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: ReplaceAudioUploadScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final continueBtn = find.text("Continue to Editor");
+      await tester.ensureVisible(continueBtn);
+      await tester.tap(continueBtn);
+      await tester.pump();
+
+      expect(find.text("Please enter a project name"), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 4)); // Hide snackbar
+
+      await tester.enterText(find.byType(TextField), "My Video Project");
+      await tester.tap(continueBtn);
+      await tester.pump();
+
+      expect(find.text("Add at least one video"), findsOneWidget);
+    });
+
+    testWidgets('Tapping cloud download fetches and shows completed projects', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: ReplaceAudioUploadScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The second cloud download icon is for Audio Tracks
+      final cloudIcons = find.byIcon(Icons.cloud_download);
+      expect(cloudIcons, findsNWidgets(2));
+
+      await tester.tap(cloudIcons.last);
+      await tester
+          .pumpAndSettle(); // Allow bottom sheet to open and API mock to resolve
+
+      // The mock API returns 'Sample Audio Project' as a completed audio project
+      expect(find.text("Sample Audio Project"), findsWidgets);
+
+      // Tap the project in the bottom sheet to add it
+      final listTile = find.widgetWithText(ListTile, "Sample Audio Project");
+      await tester.tap(listTile);
+      await tester.pumpAndSettle();
+
+      // Bottom sheet should close, and the file card should be visible
+      expect(find.text("Size: 0 B  •  Format: MP3"), findsOneWidget);
+    });
+
+    testWidgets('Tapping video cloud download shows empty state Snackbar', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: ReplaceAudioUploadScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The first cloud download icon is for Video Tracks
+      final cloudIcons = find.byIcon(Icons.cloud_download);
+
+      await tester.tap(cloudIcons.first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump();
+
+      // Mock returns no *completed* video projects (proj-2 is processing)
+      expect(find.text("No completed projects found."), findsOneWidget);
+    });
   });
 }
