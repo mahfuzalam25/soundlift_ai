@@ -26,6 +26,7 @@ import 'package:soundlift_ai/features/profile/security_screen.dart';
 import 'package:soundlift_ai/features/projects/media_viewer_screen.dart';
 import 'package:soundlift_ai/features/billing/billing_screen.dart';
 import 'package:soundlift_ai/features/editor/video_editor_screen.dart';
+import 'package:soundlift_ai/features/notifications/notifications_screen.dart'; // NEW: Imported NotificationsScreen
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -73,6 +74,8 @@ void setupMockDio() {
           );
         } else if (path.contains('/projects/') &&
             !path.endsWith('/download/')) {
+          // NEW INTERCEPT: Single Project Details
+          // Returns null URLs to safely bypass video/audio plugin crashes during widget tests
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -147,11 +150,35 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/notifications')) {
+          // FIX: Differentiate between fetching and marking as read
+          if (options.method == 'PATCH') {
+            return handler.resolve(
+              Response(requestOptions: options, statusCode: 200, data: {}),
+            );
+          }
           return handler.resolve(
-            Response(requestOptions: options, statusCode: 200, data: []),
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: [
+                {
+                  'id': 'notif-1',
+                  'title': 'Project Success',
+                  'message': 'Your audio replacement is completed.',
+                  'is_read': false,
+                  'created_at': '2026-08-05T10:00:00Z',
+                },
+                {
+                  'id': 'notif-2',
+                  'title': 'Upload Error',
+                  'message': 'Failed to upload video.',
+                  'is_read': true,
+                  'created_at': '2026-08-04T10:00:00Z',
+                },
+              ],
+            ),
           );
         } else if (path.contains('/billing/overview')) {
-          // INTERCEPT: Billing Overview
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -188,7 +215,6 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/v3.0/tracks')) {
-          // FIX: Intercept Jamendo API HTTP request to prevent testing timeouts
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -1175,6 +1201,71 @@ ADMOB_INTERSTITIAL_IOS=test_id
         find.text("Epic Cinematic"),
         findsOneWidget,
       ); // Verifies the Mock API call works
+    });
+  });
+
+  // NEW: NotificationsScreen Widget Tests
+  group('NotificationsScreen Widget Tests', () {
+    testWidgets('Renders NotificationsScreen UI and mock notifications', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: NotificationsScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Notifications"), findsOneWidget);
+      expect(find.text("Mark all read"), findsOneWidget);
+      expect(find.text("Recent"), findsOneWidget);
+      expect(find.text("Project Success"), findsOneWidget);
+      expect(find.text("Earlier"), findsOneWidget);
+      expect(find.text("Upload Error"), findsOneWidget);
+    });
+
+    testWidgets('Tapping Mark all read clears unread notifications', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: NotificationsScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final markAllBtn = find.text("Mark all read");
+      await tester.ensureVisible(markAllBtn);
+      await tester.tap(markAllBtn);
+      await tester.pumpAndSettle();
+
+      // The "Recent" section should be gone
+      expect(find.text("Recent"), findsNothing);
+      // Both notifications should now be under "Earlier"
+      expect(find.text("Project Success"), findsOneWidget);
+      expect(find.text("Upload Error"), findsOneWidget);
+      // The Mark all read button should disappear
+      expect(find.text("Mark all read"), findsNothing);
+    });
+
+    testWidgets('Tapping an unread notification marks it as read', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: NotificationsScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final unreadTile = find.text("Project Success");
+      await tester.ensureVisible(unreadTile);
+      await tester.tap(unreadTile);
+      await tester.pumpAndSettle();
+
+      // The "Recent" section should be gone (since there was only 1 unread)
+      expect(find.text("Recent"), findsNothing);
+      expect(find.text("Mark all read"), findsNothing);
     });
   });
 }
