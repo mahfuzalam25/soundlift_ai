@@ -19,10 +19,11 @@ import 'package:soundlift_ai/features/create/create_screen.dart';
 import 'package:soundlift_ai/features/projects/projects_screen.dart';
 import 'package:soundlift_ai/features/subscription/subscription_screen.dart';
 import 'package:soundlift_ai/features/profile/profile_screen.dart';
-import 'package:soundlift_ai/features/profile/sessions_screen.dart'; // NEW
-import 'package:soundlift_ai/features/profile/change_password_screen.dart'; // NEW
-import 'package:soundlift_ai/features/profile/edit_profile_screen.dart'; // NEW
-import 'package:soundlift_ai/features/profile/security_screen.dart'; // NEW
+import 'package:soundlift_ai/features/profile/sessions_screen.dart';
+import 'package:soundlift_ai/features/profile/change_password_screen.dart';
+import 'package:soundlift_ai/features/profile/edit_profile_screen.dart';
+import 'package:soundlift_ai/features/profile/security_screen.dart';
+import 'package:soundlift_ai/features/projects/media_viewer_screen.dart'; // NEW: Imported MediaViewerScreen
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -44,7 +45,8 @@ void setupMockDio() {
               data: {'name': 'Test User', 'profile_picture': null},
             ),
           );
-        } else if (path.contains('/projects')) {
+        } else if (path.endsWith('/projects/')) {
+          // INTERCEPT: Fetch all projects list
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -65,6 +67,27 @@ void setupMockDio() {
                   'media_file': {'format': 'mp4'},
                 },
               ],
+            ),
+          );
+        } else if (path.contains('/projects/') &&
+            !path.endsWith('/download/')) {
+          // NEW INTERCEPT: Single Project Details
+          // Returns null URLs to safely bypass video/audio plugin crashes during widget tests
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: {
+                'id': 'proj-1',
+                'project_name': 'Sample Audio Project',
+                'status': 'completed',
+                'created_at': '2026-05-01T12:00:00Z',
+                'media_file': {
+                  'format': 'mp3',
+                  'original_file': null,
+                  'processed_file': null,
+                },
+              },
             ),
           );
         } else if (path.contains('/my-subscription')) {
@@ -108,7 +131,6 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/sessions')) {
-          // NEW: Mock for SessionsScreen
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -238,7 +260,6 @@ Widget createRouterTestApp({
         builder: (context, state) =>
             const Scaffold(body: Text('Help Destination Screen')),
       ),
-      // NEW: Added missing placeholders for SecurityScreen routing
       GoRoute(
         path: '/profile/sessions',
         builder: (context, state) =>
@@ -538,7 +559,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const DashboardScreen()),
       );
-      // Wait for Mock Dio futures to resolve and loading indicators to clear
       await tester.pumpAndSettle();
 
       expect(find.text("Quick Actions"), findsOneWidget);
@@ -731,15 +751,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
-      // Core headings
       expect(find.text("Subscription"), findsOneWidget);
       expect(find.text("Billing"), findsOneWidget);
-
-      // Data driven from mySubscriptionProvider Mock
       expect(find.text("Current Plan"), findsOneWidget);
       expect(find.text("Free Tier"), findsOneWidget);
-
-      // Data driven from subscriptionPlansProvider Mock
       expect(find.text("Upgrade Plans"), findsOneWidget);
       expect(find.text("Pro Plan"), findsOneWidget);
       expect(find.text("\$9.99"), findsOneWidget);
@@ -794,13 +809,11 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
-      // Data driven from profileControllerProvider Mock
       expect(find.text("Test User"), findsOneWidget);
       expect(find.text("No bio added yet"), findsOneWidget);
-      expect(find.text("0"), findsNWidgets(2)); // Projects (0) and Minutes (0)
-      expect(find.text("0 MB"), findsOneWidget); // Storage
+      expect(find.text("0"), findsNWidgets(2));
+      expect(find.text("0 MB"), findsOneWidget);
 
-      // Menu Tiles
       expect(find.text("Edit Profile"), findsOneWidget);
       expect(find.text("Account Security"), findsOneWidget);
       expect(find.text("Support"), findsOneWidget);
@@ -845,7 +858,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     );
   });
 
-  // NEW: SessionsScreen Widget Tests
   group('SessionsScreen Widget Tests', () {
     testWidgets('Renders SessionsScreen and loaded mock data', (
       WidgetTester tester,
@@ -863,7 +875,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
-  // NEW: ChangePasswordScreen Widget Tests
   group('ChangePasswordScreen Widget Tests', () {
     testWidgets('Renders ChangePasswordScreen UI elements', (
       WidgetTester tester,
@@ -877,7 +888,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
 
       expect(find.text("Change Password"), findsOneWidget);
       expect(find.text("Update your password"), findsOneWidget);
-      // It has 3 CustomTextFields
       expect(find.byType(TextField), findsNWidgets(3));
       expect(find.text("Update Password"), findsOneWidget);
     });
@@ -926,29 +936,26 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
-  // NEW: EditProfileScreen Widget Tests
   group('EditProfileScreen Widget Tests', () {
-    testWidgets('Renders EditProfileScreen UI elements and reads mock profile', (
-      WidgetTester tester,
-    ) async {
-      SharedPreferences.setMockInitialValues({});
+    testWidgets(
+      'Renders EditProfileScreen UI elements and reads mock profile',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({});
 
-      await tester.pumpWidget(
-        createRouterTestApp(child: const Scaffold(body: EditProfileScreen())),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          createRouterTestApp(child: const Scaffold(body: EditProfileScreen())),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text("Edit Profile"), findsOneWidget);
-      expect(find.text("Personal Information"), findsOneWidget);
-      expect(find.text("Location Details"), findsOneWidget);
-      expect(find.text("Save Changes"), findsOneWidget);
-
-      // Ensures the Dropdowns rendered safely using default fallback "Bangladesh"
-      expect(find.text("Bangladesh"), findsOneWidget);
-    });
+        expect(find.text("Edit Profile"), findsOneWidget);
+        expect(find.text("Personal Information"), findsOneWidget);
+        expect(find.text("Location Details"), findsOneWidget);
+        expect(find.text("Save Changes"), findsOneWidget);
+        expect(find.text("Bangladesh"), findsOneWidget);
+      },
+    );
   });
 
-  // NEW: SecurityScreen Widget Tests
   group('SecurityScreen Widget Tests', () {
     testWidgets('Renders SecurityScreen UI components', (
       WidgetTester tester,
@@ -1002,6 +1009,67 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpAndSettle();
 
       expect(find.text("Sessions Destination Screen"), findsOneWidget);
+    });
+  });
+
+  // NEW: MediaViewerScreen Widget Tests
+  group('MediaViewerScreen Widget Tests', () {
+    testWidgets(
+      'Renders MediaViewerScreen details safely bypassing media plugins',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({});
+
+        await tester.pumpWidget(
+          createRouterTestApp(
+            child: const Scaffold(body: MediaViewerScreen(projectId: 'proj-1')),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // UI Texts from screen
+        expect(find.text("Project Overview"), findsOneWidget);
+
+        // Values drawn from the Mock Project Detail API response
+        expect(find.text("Sample Audio Project"), findsOneWidget);
+        expect(find.text("Format: MP3"), findsOneWidget);
+
+        // Control buttons
+        expect(find.text("Original"), findsOneWidget);
+        expect(find.text("Enhanced"), findsOneWidget);
+
+        // Safety check: The UI should gracefully default to "Media not available"
+        // instead of trying to initialize the native video/audio player plugin.
+        expect(find.text("Media not available"), findsOneWidget);
+      },
+    );
+
+    testWidgets('Toggles between Original and Enhanced buttons safely', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: MediaViewerScreen(projectId: 'proj-1')),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final originalBtn = find.text("Original");
+      final enhancedBtn = find.text("Enhanced");
+
+      // Tap Original State
+      await tester.ensureVisible(originalBtn);
+      await tester.tap(originalBtn);
+      await tester.pumpAndSettle();
+
+      // Tap Enhanced State
+      await tester.ensureVisible(enhancedBtn);
+      await tester.tap(enhancedBtn);
+      await tester.pumpAndSettle();
+
+      // Ensure that toggling state does not trigger a crash and the safe container persists
+      expect(find.text("Media not available"), findsOneWidget);
     });
   });
 }
