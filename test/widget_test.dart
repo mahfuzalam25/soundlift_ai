@@ -30,6 +30,13 @@ import 'package:soundlift_ai/features/notifications/notifications_screen.dart';
 import 'package:soundlift_ai/features/processing/processing_screen.dart';
 import 'package:soundlift_ai/features/referral/referral_screen.dart';
 import 'package:soundlift_ai/features/settings/settings_screen.dart';
+// NEW: Support screens imports
+import 'package:soundlift_ai/features/support/help_screen.dart';
+import 'package:soundlift_ai/features/support/support_screen.dart';
+import 'package:soundlift_ai/features/support/faq_screen.dart';
+import 'package:soundlift_ai/features/support/docs_screen.dart';
+import 'package:soundlift_ai/features/support/tutorials_screen.dart';
+import 'package:soundlift_ai/features/support/contact_support_screen.dart';
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -283,6 +290,80 @@ void setupMockDio() {
               data: {'message': 'Referral claimed successfully'},
             ),
           );
+        } else if (path.contains('/support/faqs')) {
+          // NEW INTERCEPT: Support FAQs Mock Data
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: [
+                {
+                  'id': '1',
+                  'question': 'How do I enhance audio?',
+                  'answer':
+                      'Go to the Create tab and select Audio Enhancement.',
+                },
+              ],
+            ),
+          );
+        } else if (path.contains('/support/tutorials')) {
+          // NEW INTERCEPT: Support Tutorials Mock Data
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: [
+                {
+                  'id': '1',
+                  'title': 'Getting Started',
+                  'description': 'Learn the basics of SoundLift AI',
+                  'video_url': 'https://youtube.com/watch?v=mock_video_id',
+                },
+              ],
+            ),
+          );
+        } else if (path.contains('/support/docs')) {
+          // NEW INTERCEPT: Support Docs Mock Data
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: [
+                {
+                  'id': '1',
+                  'title': 'Terms of Service',
+                  'content': 'These are the terms and conditions.',
+                },
+              ],
+            ),
+          );
+        } else if (path.contains('/support/contact')) {
+          // NEW INTERCEPT: Contact Support Mock Data
+          if (options.method == 'POST') {
+            return handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {'message': 'Success'},
+              ),
+            );
+          }
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: [
+                {
+                  'id': '1',
+                  'subject': 'App Crashed',
+                  'message': 'The app crashes when I upload.',
+                  'is_replied': true,
+                  'admin_reply': 'We have fixed this in v1.2',
+                  'created_at': '2026-08-01T12:00:00Z',
+                },
+              ],
+            ),
+          );
         }
 
         // Generic fallback to prevent null crashes
@@ -402,6 +483,37 @@ Widget createRouterTestApp({
         path: '/profile/change-password',
         builder: (context, state) =>
             const Scaffold(body: Text('Change Password Destination Screen')),
+      ),
+      // NEW: Support Folder GoRouter destinations
+      GoRoute(
+        path: '/help/faq',
+        builder: (context, state) =>
+            const Scaffold(body: Text('FAQ Destination Screen')),
+      ),
+      GoRoute(
+        path: '/help/tutorials',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Tutorials Destination Screen')),
+      ),
+      GoRoute(
+        path: '/help/docs',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Docs Destination Screen')),
+      ),
+      GoRoute(
+        path: '/support',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Support Destination Screen')),
+      ),
+      GoRoute(
+        path: '/support/contact',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Contact Support Destination Screen')),
+      ),
+      GoRoute(
+        path: '/help/tutorials/player/:id',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Tutorial Player Destination Screen')),
       ),
       ...?additionalRoutes,
     ],
@@ -1486,7 +1598,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
-  // NEW: SettingsScreen Widget Tests
   group('SettingsScreen Widget Tests', () {
     testWidgets('Renders SettingsScreen UI elements and reads profile data', (
       WidgetTester tester,
@@ -1567,5 +1678,267 @@ ADMOB_INTERSTITIAL_IOS=test_id
       expect(find.text("System"), findsNothing);
       expect(find.text("Dark"), findsOneWidget);
     });
+  });
+
+  // NEW: Support Folder Widget Tests
+  group('HelpScreen Widget Tests', () {
+    testWidgets('Renders HelpScreen UI elements correctly', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: HelpScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Help Center"), findsOneWidget);
+      expect(find.text("How can we help you?"), findsOneWidget);
+      expect(find.text("FAQ"), findsOneWidget);
+      expect(find.text("Tutorials"), findsOneWidget);
+      expect(find.text("Documentation"), findsOneWidget);
+      expect(find.text("Still need help?"), findsOneWidget);
+      expect(find.text("Contact Support"), findsOneWidget);
+    });
+
+    testWidgets('Tapping FAQ navigates to FAQ route', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: HelpScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text("FAQ"));
+      await tester.pumpAndSettle();
+      expect(find.text("FAQ Destination Screen"), findsOneWidget);
+    });
+
+    testWidgets('Tapping Tutorials navigates to Tutorials route', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: HelpScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text("Tutorials"));
+      await tester.pumpAndSettle();
+      expect(find.text("Tutorials Destination Screen"), findsOneWidget);
+    });
+
+    testWidgets('Tapping Documentation navigates to Docs route', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: HelpScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text("Documentation"));
+      await tester.pumpAndSettle();
+      expect(find.text("Docs Destination Screen"), findsOneWidget);
+    });
+
+    testWidgets('Tapping Contact Support navigates to Support route', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: HelpScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final contactSupportBtn = find.text("Contact Support");
+      await tester.ensureVisible(contactSupportBtn);
+      await tester.tap(contactSupportBtn);
+      await tester.pumpAndSettle();
+      expect(find.text("Support Destination Screen"), findsOneWidget);
+    });
+  });
+
+  group('SupportScreen Widget Tests', () {
+    testWidgets('Renders SupportScreen options', (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: SupportScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Contact Support"), findsOneWidget);
+      expect(find.text("We're here to help"), findsOneWidget);
+      expect(find.text("Live Chat"), findsOneWidget);
+      expect(find.text("Email Support"), findsOneWidget);
+      expect(find.text("Create Ticket"), findsOneWidget);
+    });
+
+    testWidgets('Tapping Email Support navigates to contact route', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: SupportScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text("Email Support"));
+      await tester.pumpAndSettle();
+      expect(find.text("Contact Support Destination Screen"), findsOneWidget);
+    });
+  });
+
+  group('FaqScreen Widget Tests', () {
+    testWidgets('Renders FaqScreen and reads mock FAQ data', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: FaqScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("FAQ"), findsOneWidget);
+      expect(find.text("How do I enhance audio?"), findsOneWidget);
+    });
+
+    testWidgets('Tapping an FAQ reveals the answer', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: FaqScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final faqQuestion = find.text("How do I enhance audio?");
+      await tester.tap(faqQuestion);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text("Go to the Create tab and select Audio Enhancement."),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('DocsScreen Widget Tests', () {
+    testWidgets('Renders DocsScreen and reads mock documentation data', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: DocsScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Documentation"), findsOneWidget);
+      expect(find.text("Terms of Service"), findsOneWidget);
+      expect(find.text("These are the terms and conditions."), findsOneWidget);
+    });
+  });
+
+  group('TutorialsScreen Widget Tests', () {
+    testWidgets('Renders TutorialsScreen and reads mock tutorial data', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: TutorialsScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Tutorials"), findsOneWidget);
+      expect(find.text("Getting Started"), findsOneWidget);
+      expect(find.text("Learn the basics of SoundLift AI"), findsOneWidget);
+    });
+
+    testWidgets(
+      'Tapping a tutorial navigates to the video player route safely',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({});
+        await tester.pumpWidget(
+          createRouterTestApp(child: const Scaffold(body: TutorialsScreen())),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text("Getting Started"));
+        await tester.pumpAndSettle();
+
+        expect(find.text("Tutorial Player Destination Screen"), findsOneWidget);
+      },
+    );
+  });
+
+  group('ContactSupportScreen Widget Tests', () {
+    testWidgets(
+      'Renders ContactSupportScreen and reads mock previous tickets',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({});
+        await tester.pumpWidget(
+          createRouterTestApp(
+            child: const Scaffold(body: ContactSupportScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text("Email Support"), findsOneWidget);
+        expect(find.text("Send us a message"), findsOneWidget);
+        expect(find.text("Your Messages"), findsOneWidget);
+        expect(find.text("App Crashed"), findsOneWidget);
+        expect(find.text("Replied"), findsOneWidget);
+        expect(find.text("We have fixed this in v1.2"), findsOneWidget);
+      },
+    );
+
+    testWidgets('Shows validation error Snackbar when submitting empty form', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: ContactSupportScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final sendBtn = find.text("Send Message");
+      await tester.ensureVisible(sendBtn);
+      await tester.tap(sendBtn);
+      await tester.pump(); // Get first frame of Snackbar
+
+      expect(find.text("Please fill out all fields"), findsOneWidget);
+    });
+
+    testWidgets(
+      'Shows success Snackbar when submitting valid support message',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({});
+        await tester.pumpWidget(
+          createRouterTestApp(
+            child: const Scaffold(body: ContactSupportScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final textInputs = find.byType(EditableText);
+        await tester.enterText(textInputs.first, "Need help with billing");
+        await tester.enterText(textInputs.last, "Please update my card.");
+
+        final sendBtn = find.text("Send Message");
+        await tester.ensureVisible(sendBtn);
+        await tester.tap(sendBtn);
+
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.pump();
+
+        expect(find.text("Message sent successfully!"), findsOneWidget);
+
+        await tester
+            .pumpAndSettle(); // Flush network invalidation timers safely
+      },
+    );
   });
 }
