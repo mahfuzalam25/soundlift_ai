@@ -116,6 +116,10 @@ jobs:
       - name: Create Environment File
         run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
 
+      # FIX: Force Flutter to bypass the experimental Swift Package Manager
+      # and use the stable CocoaPods system for heavy plugins like FFmpeg.
+      - name: Disable Swift Package Manager
+        run: flutter config --no-enable-swift-package-manager
       # The --no-codesign flag allows the CI to verify that the iOS app compiles
       # perfectly without failing due to missing Apple Developer Certificates.
       - name: Build iOS (Unsigned)
