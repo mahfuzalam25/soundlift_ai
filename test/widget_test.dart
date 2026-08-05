@@ -2003,7 +2003,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(submitBtn); // Ensure button is brought back onto screen
+      await tester.ensureVisible(
+        submitBtn,
+      ); // Ensure button is brought back onto screen
       await tester.tap(submitBtn);
 
       await tester.pump();
@@ -2065,7 +2067,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(continueBtn); // Ensure button is brought back onto screen
+      await tester.ensureVisible(
+        continueBtn,
+      ); // Ensure button is brought back onto screen
       await tester.tap(continueBtn);
 
       await tester.pump();
