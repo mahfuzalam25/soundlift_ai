@@ -23,7 +23,8 @@ import 'package:soundlift_ai/features/profile/sessions_screen.dart';
 import 'package:soundlift_ai/features/profile/change_password_screen.dart';
 import 'package:soundlift_ai/features/profile/edit_profile_screen.dart';
 import 'package:soundlift_ai/features/profile/security_screen.dart';
-import 'package:soundlift_ai/features/projects/media_viewer_screen.dart'; // NEW: Imported MediaViewerScreen
+import 'package:soundlift_ai/features/projects/media_viewer_screen.dart';
+import 'package:soundlift_ai/features/billing/billing_screen.dart'; // NEW: Imported BillingScreen
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -149,6 +150,35 @@ void setupMockDio() {
         } else if (path.contains('/notifications')) {
           return handler.resolve(
             Response(requestOptions: options, statusCode: 200, data: []),
+          );
+        } else if (path.contains('/billing/overview')) {
+          // NEW INTERCEPT: Billing Overview
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: {
+                'current_plan': {
+                  'name': 'Pro',
+                  'price': '9.99',
+                  'duration': '/month',
+                  'status': 'Active',
+                  'is_active': true,
+                  'current_period_end': '2026-12-31T00:00:00Z',
+                },
+                'recent_invoices': [
+                  {
+                    'id': 'inv-1',
+                    'invoice_number': 'INV-2026-001',
+                    'plan_name': 'Pro Plan',
+                    'amount': '9.99',
+                    'currency': 'USD',
+                    'status': 'paid',
+                    'created_at': '2026-05-01T12:00:00Z',
+                  },
+                ],
+              },
+            ),
           );
         }
 
@@ -559,6 +589,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const DashboardScreen()),
       );
+      // Wait for Mock Dio futures to resolve and loading indicators to clear
       await tester.pumpAndSettle();
 
       expect(find.text("Quick Actions"), findsOneWidget);
@@ -751,10 +782,15 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
+      // Core headings
       expect(find.text("Subscription"), findsOneWidget);
       expect(find.text("Billing"), findsOneWidget);
+
+      // Data driven from mySubscriptionProvider Mock
       expect(find.text("Current Plan"), findsOneWidget);
       expect(find.text("Free Tier"), findsOneWidget);
+
+      // Data driven from subscriptionPlansProvider Mock
       expect(find.text("Upgrade Plans"), findsOneWidget);
       expect(find.text("Pro Plan"), findsOneWidget);
       expect(find.text("\$9.99"), findsOneWidget);
@@ -1012,7 +1048,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
-  // NEW: MediaViewerScreen Widget Tests
   group('MediaViewerScreen Widget Tests', () {
     testWidgets(
       'Renders MediaViewerScreen details safely bypassing media plugins',
@@ -1070,6 +1105,75 @@ ADMOB_INTERSTITIAL_IOS=test_id
 
       // Ensure that toggling state does not trigger a crash and the safe container persists
       expect(find.text("Media not available"), findsOneWidget);
+    });
+  });
+
+  // NEW: BillingScreen Widget Tests
+  group('BillingScreen Widget Tests', () {
+    testWidgets('Renders BillingScreen UI elements and loaded mock data', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: BillingScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      // Top level headings
+      expect(find.text("Billing & Payments"), findsOneWidget);
+      expect(find.text("Overview"), findsOneWidget);
+      expect(find.text("Billing History"), findsOneWidget);
+
+      // Current Plan Widget
+      expect(find.text("Active"), findsOneWidget);
+      expect(find.text("\$9.99 / month"), findsOneWidget);
+      expect(find.text("Visa ending in 4242"), findsOneWidget);
+
+      // Because date parsing handles timezones based on local execution context,
+      // we check for a partial match on the label to prevent CI timezone mismatch failures.
+      expect(find.textContaining("Next renewal on"), findsOneWidget);
+
+      // Billing History List
+      expect(find.text("Invoice INV-2026-001"), findsOneWidget);
+      expect(find.text("\$9.99"), findsOneWidget);
+      expect(find.text("Paid"), findsOneWidget);
+    });
+
+    testWidgets('Tapping Edit payment method shows coming soon Snackbar', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: BillingScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final editBtn = find.text("Edit");
+      await tester.ensureVisible(editBtn);
+      await tester.tap(editBtn);
+      await tester.pump();
+
+      expect(find.text("Update Payment Method coming soon"), findsOneWidget);
+    });
+
+    testWidgets('Tapping download on invoice shows downloading Snackbar', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: BillingScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final downloadBtn = find.byIcon(Icons.download_rounded);
+      await tester.ensureVisible(downloadBtn);
+      await tester.tap(downloadBtn);
+      await tester.pump();
+
+      expect(find.text("Downloading INV-2026-001 as PDF..."), findsOneWidget);
     });
   });
 }
