@@ -2119,7 +2119,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pump();
 
       // Mock returns no *completed* video projects (proj-2 is processing)
-      
+
       expect(find.text("No completed projects found."), findsOneWidget);
     });
   });
