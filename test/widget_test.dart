@@ -1989,13 +1989,13 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.tap(submitBtn);
       await tester.pump(); // frame for snackbar
       await tester.pump(const Duration(milliseconds: 50)); // allow animation
+      await tester.pump(); // FIX: render the snackbar frame onto the screen
 
       expect(find.text("Please enter a project name."), findsOneWidget);
 
       // Hide snackbar fully
       await tester.pump(const Duration(seconds: 4));
-      await tester
-          .pumpAndSettle(); // FIX: Clear the queue before next interaction
+      await tester.pumpAndSettle(); // Clear the queue before next interaction
 
       // Enter text and try again
       await tester.enterText(find.byType(TextField), "My Audio Project");
@@ -2003,6 +2003,8 @@ ADMOB_INTERSTITIAL_IOS=test_id
 
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
+      await tester
+          .pump(); // FIX: render the second snackbar frame onto the screen
 
       expect(find.text("Please select a file first"), findsOneWidget);
     });
@@ -2045,19 +2047,21 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.tap(continueBtn);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump(); // FIX: render the snackbar frame onto the screen
 
       expect(find.text("Please enter a project name"), findsOneWidget);
 
       // Hide snackbar fully
       await tester.pump(const Duration(seconds: 4));
-      await tester
-          .pumpAndSettle(); // FIX: Clear the queue before next interaction
+      await tester.pumpAndSettle(); // Clear the queue before next interaction
 
       await tester.enterText(find.byType(TextField), "My Video Project");
       await tester.tap(continueBtn);
 
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
+      await tester
+          .pump(); // FIX: render the second snackbar frame onto the screen
 
       expect(find.text("Add at least one video"), findsOneWidget);
     });
@@ -2091,7 +2095,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpAndSettle();
 
       // Bottom sheet should close, and the file card should be visible.
-      // FIX: ReplaceAudioUploadScreen doesn't show "Format" in its UI, it only shows "Size"
+      // ReplaceAudioUploadScreen doesn't show "Format" in its UI, it only shows "Size"
       expect(find.textContaining("Size: 0 B"), findsOneWidget);
     });
 
