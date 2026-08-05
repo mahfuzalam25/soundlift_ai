@@ -1999,6 +1999,13 @@ ADMOB_INTERSTITIAL_IOS=test_id
 
       // Enter text and try again
       await tester.enterText(find.byType(TextField), "My Audio Project");
+      // FIX: Close keyboard before interacting with the off-screen UI!
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        submitBtn,
+      ); // Ensure button is brought back onto screen
       await tester.tap(submitBtn);
 
       await tester.pump();
@@ -2056,6 +2063,13 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpAndSettle(); // Clear the queue before next interaction
 
       await tester.enterText(find.byType(TextField), "My Video Project");
+      // FIX: Close keyboard before interacting with the off-screen UI!
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        continueBtn,
+      ); // Ensure button is brought back onto screen
       await tester.tap(continueBtn);
 
       await tester.pump();
@@ -2119,7 +2133,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pump();
 
       // Mock returns no *completed* video projects (proj-2 is processing)
-
       expect(find.text("No completed projects found."), findsOneWidget);
     });
   });
