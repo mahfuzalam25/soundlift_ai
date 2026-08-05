@@ -48,6 +48,7 @@ void setupMockDio() {
             ),
           );
         } else if (path.endsWith('/projects/')) {
+          // INTERCEPT: Fetch all projects list
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -150,6 +151,7 @@ void setupMockDio() {
             Response(requestOptions: options, statusCode: 200, data: []),
           );
         } else if (path.contains('/billing/overview')) {
+          // INTERCEPT: Billing Overview
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -185,8 +187,27 @@ void setupMockDio() {
               data: "Mock PDF content",
             ),
           );
+        } else if (path.contains('/v3.0/tracks')) {
+          // FIX: Intercept Jamendo API HTTP request to prevent testing timeouts
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: {
+                'headers': {'status': 'success'},
+                'results': [
+                  {
+                    'name': 'Epic Cinematic',
+                    'audio': 'http://localhost:8001/audio.mp3',
+                    'artist_name': 'Hans Zimmer',
+                  },
+                ],
+              },
+            ),
+          );
         }
 
+        // Generic fallback to prevent null crashes
         return handler.resolve(
           Response(requestOptions: options, statusCode: 200, data: {}),
         );
@@ -966,6 +987,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
         ),
       );
       await tester.pumpAndSettle();
+
       final originalBtn = find.text("Original");
       final enhancedBtn = find.text("Enhanced");
 
@@ -1019,7 +1041,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.tap(editBtn);
 
       await tester.pump();
-
       expect(find.text("Update Payment Method coming soon"), findsOneWidget);
     });
 
@@ -1037,7 +1058,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
         await tester.tap(downloadBtn);
 
         await tester.pump();
-
         expect(find.text("Failed to download invoice."), findsOneWidget);
       },
     );
@@ -1080,13 +1100,24 @@ ADMOB_INTERSTITIAL_IOS=test_id
       expect(find.text("Video NLE Editor"), findsOneWidget);
       expect(find.text("Export"), findsOneWidget);
       expect(find.text("Editing: Test Video.mp4"), findsOneWidget);
-      expect(find.text("Video Sequence"), findsOneWidget);
-      expect(find.text("Audio Sequence"), findsOneWidget);
-      expect(find.text("Background Music"), findsOneWidget);
-      expect(find.text("Add Background Music"), findsOneWidget);
+
+      // FIX: Use skipOffstage: false to ensure the text isn't missed due to lazy viewport bounds
+      expect(find.text("Video Sequence", skipOffstage: false), findsOneWidget);
+      expect(find.text("Audio Sequence", skipOffstage: false), findsOneWidget);
+      expect(
+        find.text("Background Music", skipOffstage: false),
+        findsOneWidget,
+      );
+      expect(
+        find.text("Add Background Music", skipOffstage: false),
+        findsOneWidget,
+      );
 
       // Because native media players crash in tests, duration stays 0, safely triggering the fallback text
-      expect(find.text("Select clip to load duration..."), findsOneWidget);
+      expect(
+        find.text("Select clip to load duration...", skipOffstage: false),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Tapping Speed button cycles speed options', (
@@ -1131,14 +1162,19 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
-      final addBgmBtn = find.text("Add Background Music");
+      // FIX: Use skipOffstage to locate the button that renders below the virtual viewport fold
+      final addBgmBtn = find.text("Add Background Music", skipOffstage: false);
       await tester.ensureVisible(addBgmBtn);
-      await tester.tap(addBgmBtn);
+      await tester.pumpAndSettle();
 
-      // Only pump once to render the bottom sheet frame without hanging the test runner on pending HTTP requests
-      await tester.pump();
+      await tester.tap(addBgmBtn);
+      await tester.pumpAndSettle(); // Wait for bottom sheet
 
       expect(find.text("Music Library (Jamendo)"), findsOneWidget);
+      expect(
+        find.text("Epic Cinematic"),
+        findsOneWidget,
+      ); // Verifies the Mock API call works
     });
   });
 }

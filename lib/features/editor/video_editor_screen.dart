@@ -10,6 +10,7 @@ import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/network/api_client.dart'; // NEW: Imported to access dioProvider
 import '../../shared/dialogs/custom_snackbar.dart';
 import '../projects/providers/project_provider.dart';
 
@@ -667,7 +668,6 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 24),
               color: AppColors.background,
-              // FIX: Replaced ListView with SingleChildScrollView to prevent lazy loading in tests
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -927,14 +927,15 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen> {
   }
 }
 
-class BgmPickerSheet extends StatefulWidget {
+// FIX: Changed from StatefulWidget to ConsumerStatefulWidget to access Riverpod's mocked Dio
+class BgmPickerSheet extends ConsumerStatefulWidget {
   const BgmPickerSheet({super.key});
 
   @override
-  State<BgmPickerSheet> createState() => _BgmPickerSheetState();
+  ConsumerState<BgmPickerSheet> createState() => _BgmPickerSheetState();
 }
 
-class _BgmPickerSheetState extends State<BgmPickerSheet> {
+class _BgmPickerSheetState extends ConsumerState<BgmPickerSheet> {
   final TextEditingController _searchController = TextEditingController();
   final AudioPlayer _previewPlayer = AudioPlayer();
 
@@ -953,15 +954,18 @@ class _BgmPickerSheetState extends State<BgmPickerSheet> {
     try {
       final clientId = dotenv.env['JAMENDO_CLIENT_ID'] ?? '56d30c95';
 
-      final response = await Dio().get(
-        'https://api.jamendo.com/v3.0/tracks/',
-        queryParameters: {
-          'client_id': clientId,
-          'format': 'json',
-          'limit': 15,
-          'tags': query.toLowerCase(),
-        },
-      );
+      // FIX: Replace standard Dio() with the injected dioProvider to intercept the test calls
+      final response = await ref
+          .read(dioProvider)
+          .get(
+            'https://api.jamendo.com/v3.0/tracks/',
+            queryParameters: {
+              'client_id': clientId,
+              'format': 'json',
+              'limit': 15,
+              'tags': query.toLowerCase(),
+            },
+          );
 
       if (response.data['headers'] != null &&
           response.data['headers']['status'] == 'failed') {
@@ -978,7 +982,9 @@ class _BgmPickerSheetState extends State<BgmPickerSheet> {
         );
       }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
