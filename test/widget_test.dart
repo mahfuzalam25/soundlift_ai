@@ -1972,7 +1972,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       expect(find.text("Submit for Processing"), findsOneWidget);
     });
 
-    testWidgets('Shows validation Snackbars for empty submissions', (
+    testWidgets('Shows validation Snackbar for empty project name', (
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
@@ -1989,29 +1989,34 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.tap(submitBtn);
       await tester.pump(); // frame for snackbar
       await tester.pump(const Duration(milliseconds: 50)); // allow animation
-      await tester.pump(); // FIX: render the snackbar frame onto the screen
+      await tester.pump(); // render the snackbar frame onto the screen
 
       expect(find.text("Please enter a project name."), findsOneWidget);
+    });
 
-      // Hide snackbar fully
-      await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle(); // Clear the queue before next interaction
+    testWidgets('Shows validation Snackbar for missing file', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: UploadScreen(type: 'audio_enhancement')),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-      // Enter text and try again
+      // Enter text
       await tester.enterText(find.byType(TextField), "My Audio Project");
-      // FIX: Close keyboard before interacting with the off-screen UI!
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(
-        submitBtn,
-      ); // Ensure button is brought back onto screen
+      final submitBtn = find.text("Submit for Processing");
+      await tester.ensureVisible(submitBtn);
       await tester.tap(submitBtn);
 
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      await tester
-          .pump(); // FIX: render the second snackbar frame onto the screen
+      await tester.pump();
 
       expect(find.text("Please select a file first"), findsOneWidget);
     });
@@ -2037,7 +2042,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       expect(find.text("Continue to Editor"), findsOneWidget);
     });
 
-    testWidgets('Shows validation Snackbars for empty submissions', (
+    testWidgets('Shows validation Snackbar for empty project name', (
       WidgetTester tester,
     ) async {
       SharedPreferences.setMockInitialValues({});
@@ -2054,28 +2059,33 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.tap(continueBtn);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      await tester.pump(); // FIX: render the snackbar frame onto the screen
+      await tester.pump();
 
       expect(find.text("Please enter a project name"), findsOneWidget);
+    });
 
-      // Hide snackbar fully
-      await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle(); // Clear the queue before next interaction
+    testWidgets('Shows validation Snackbar for missing video', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: ReplaceAudioUploadScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField), "My Video Project");
-      // FIX: Close keyboard before interacting with the off-screen UI!
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(
-        continueBtn,
-      ); // Ensure button is brought back onto screen
+      final continueBtn = find.text("Continue to Editor");
+      await tester.ensureVisible(continueBtn);
       await tester.tap(continueBtn);
 
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      await tester
-          .pump(); // FIX: render the second snackbar frame onto the screen
+      await tester.pump();
 
       expect(find.text("Add at least one video"), findsOneWidget);
     });
