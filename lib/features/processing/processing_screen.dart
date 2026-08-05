@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/dialogs/custom_snackbar.dart';
 import '../projects/providers/project_provider.dart';
-import '../../core/services/ad_service.dart'; // NEW
-import '../subscription/providers/subscription_provider.dart'; // NEW
+import '../../core/services/ad_service.dart';
+import '../subscription/providers/subscription_provider.dart';
 
 class ProcessingScreen extends ConsumerStatefulWidget {
   final String jobId;

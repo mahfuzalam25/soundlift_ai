@@ -26,7 +26,8 @@ import 'package:soundlift_ai/features/profile/security_screen.dart';
 import 'package:soundlift_ai/features/projects/media_viewer_screen.dart';
 import 'package:soundlift_ai/features/billing/billing_screen.dart';
 import 'package:soundlift_ai/features/editor/video_editor_screen.dart';
-import 'package:soundlift_ai/features/notifications/notifications_screen.dart'; // NEW: Imported NotificationsScreen
+import 'package:soundlift_ai/features/notifications/notifications_screen.dart';
+import 'package:soundlift_ai/features/processing/processing_screen.dart';
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -73,9 +74,9 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/projects/') &&
-            !path.endsWith('/download/')) {
-          // NEW INTERCEPT: Single Project Details
-          // Returns null URLs to safely bypass video/audio plugin crashes during widget tests
+            !path.endsWith('/download/') &&
+            !path.contains('/status/')) {
+          // INTERCEPT: Single Project Details
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -90,6 +91,19 @@ void setupMockDio() {
                   'original_file': null,
                   'processed_file': null,
                 },
+              },
+            ),
+          );
+        } else if (path.contains('/status/')) {
+          // NEW INTERCEPT: Project Processing Status
+          return handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: {
+                'job_status': 'completed',
+                'progress': 100,
+                'processed_file_url': 'http://mock.url/file.mp4',
               },
             ),
           );
@@ -150,7 +164,6 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/notifications')) {
-          // FIX: Differentiate between fetching and marking as read
           if (options.method == 'PATCH') {
             return handler.resolve(
               Response(requestOptions: options, statusCode: 200, data: {}),
@@ -591,6 +604,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpWidget(
         createRouterTestApp(child: const DashboardScreen()),
       );
+      // Wait for Mock Dio futures to resolve and loading indicators to clear
       await tester.pumpAndSettle();
       expect(find.text("Quick Actions"), findsOneWidget);
       expect(find.text("Recent Projects"), findsOneWidget);
@@ -1089,7 +1103,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     );
   });
 
-  // NEW: VideoEditorScreen Widget Tests
   group('VideoEditorScreen Widget Tests', () {
     final mockVideos = [
       {
@@ -1127,7 +1140,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       expect(find.text("Export"), findsOneWidget);
       expect(find.text("Editing: Test Video.mp4"), findsOneWidget);
 
-      // FIX: Use skipOffstage: false to ensure the text isn't missed due to lazy viewport bounds
       expect(find.text("Video Sequence", skipOffstage: false), findsOneWidget);
       expect(find.text("Audio Sequence", skipOffstage: false), findsOneWidget);
       expect(
@@ -1139,7 +1151,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
         findsOneWidget,
       );
 
-      // Because native media players crash in tests, duration stays 0, safely triggering the fallback text
       expect(
         find.text("Select clip to load duration...", skipOffstage: false),
         findsOneWidget,
@@ -1188,7 +1199,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
-      // FIX: Use skipOffstage to locate the button that renders below the virtual viewport fold
       final addBgmBtn = find.text("Add Background Music", skipOffstage: false);
       await tester.ensureVisible(addBgmBtn);
       await tester.pumpAndSettle();
@@ -1197,10 +1207,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pumpAndSettle(); // Wait for bottom sheet
 
       expect(find.text("Music Library (Jamendo)"), findsOneWidget);
-      expect(
-        find.text("Epic Cinematic"),
-        findsOneWidget,
-      ); // Verifies the Mock API call works
+      expect(find.text("Epic Cinematic"), findsOneWidget);
     });
   });
 
@@ -1266,6 +1273,89 @@ ADMOB_INTERSTITIAL_IOS=test_id
       // The "Recent" section should be gone (since there was only 1 unread)
       expect(find.text("Recent"), findsNothing);
       expect(find.text("Mark all read"), findsNothing);
+    });
+  });
+
+  // NEW: ProcessingScreen Widget Tests
+  group('ProcessingScreen Widget Tests', () {
+    testWidgets(
+      'Renders ProcessingScreen and transitions from Processing to Success',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({});
+
+        await tester.pumpWidget(
+          createRouterTestApp(
+            child: const Scaffold(body: ProcessingScreen(jobId: 'job-123')),
+          ),
+        );
+
+        // Initial State (Before 2.5s timer triggers)
+        expect(find.text("Processing"), findsOneWidget);
+        expect(
+          find.text("Please wait while we process your file."),
+          findsOneWidget,
+        );
+        expect(find.text("Run in Background"), findsOneWidget);
+
+        // Fast forward the virtual clock by 2600ms to trigger the Periodic Timer.
+        // This will hit the mocked /status/ endpoint returning "completed"
+        // which natively kills the timer and triggers the state change.
+        await tester.pump(const Duration(milliseconds: 2600));
+
+        // Pump once to capture the Snackbar being drawn to the screen
+        await tester.pump();
+        expect(find.text("Processing Complete!"), findsOneWidget);
+
+        // Let the remaining animations finish safely
+        await tester.pumpAndSettle();
+
+        expect(find.text("Success!"), findsOneWidget);
+        expect(find.text("Your media is ready to view!"), findsOneWidget);
+        expect(find.text("View Result"), findsOneWidget);
+      },
+    );
+
+    testWidgets('Tapping Run in Background stops polling and navigates', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: ProcessingScreen(jobId: 'job-123')),
+        ),
+      );
+
+      final runBtn = find.text("Run in Background");
+      await tester.ensureVisible(runBtn);
+      await tester.tap(runBtn);
+      await tester.pumpAndSettle();
+
+      // Verifies the user was kicked out to the dashboard immediately
+      expect(find.text('Dashboard Destination Screen'), findsOneWidget);
+    });
+
+    testWidgets('Tapping View Result navigates to project overview', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: const Scaffold(body: ProcessingScreen(jobId: 'job-123')),
+        ),
+      );
+
+      // Fast forward to completed state via mock API
+      await tester.pump(const Duration(milliseconds: 2600));
+      await tester.pumpAndSettle();
+
+      final viewBtn = find.text("View Result");
+      await tester.ensureVisible(viewBtn);
+      await tester.tap(viewBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Project Overview Screen'), findsOneWidget);
     });
   });
 }
