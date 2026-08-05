@@ -29,6 +29,7 @@ import 'package:soundlift_ai/features/editor/video_editor_screen.dart';
 import 'package:soundlift_ai/features/notifications/notifications_screen.dart';
 import 'package:soundlift_ai/features/processing/processing_screen.dart';
 import 'package:soundlift_ai/features/referral/referral_screen.dart';
+import 'package:soundlift_ai/features/settings/settings_screen.dart'; // NEW: Imported SettingsScreen
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -1379,7 +1380,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
-  // NEW: ReferralScreen Widget Tests
   group('ReferralScreen Widget Tests', () {
     testWidgets('Renders ReferralScreen UI elements and reads mock data', (
       WidgetTester tester,
@@ -1448,7 +1448,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
         findsOneWidget,
       );
 
-      // FIX: Flush the pending API requests triggered by provider invalidation
+      // Flush the pending API requests triggered by provider invalidation
       await tester.pumpAndSettle();
     });
 
@@ -1467,6 +1467,86 @@ ADMOB_INTERSTITIAL_IOS=test_id
       await tester.pump(); // Get first frame of Snackbar
 
       expect(find.text("Referral link copied to clipboard!"), findsOneWidget);
+    });
+  });
+
+  // NEW: SettingsScreen Widget Tests
+  group('SettingsScreen Widget Tests', () {
+    testWidgets('Renders SettingsScreen UI elements and reads profile data', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: SettingsScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Settings"), findsOneWidget);
+      expect(find.text("Preferences"), findsOneWidget);
+      expect(find.text("Notifications"), findsOneWidget);
+      expect(find.text("Processing & Export"), findsOneWidget);
+
+      expect(find.text("Appearance"), findsOneWidget);
+      expect(find.text("Language"), findsOneWidget);
+      expect(find.text("Push Notifications"), findsOneWidget);
+      expect(find.text("Email Updates"), findsOneWidget);
+      expect(find.text("Auto Save to Device"), findsOneWidget);
+      expect(find.text("Default Quality"), findsOneWidget);
+    });
+
+    testWidgets('Toggling notification settings updates the switch state', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: SettingsScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      final pushSwitchFinder = find.descendant(
+        of: find.widgetWithText(ListTile, "Push Notifications"),
+        matching: find.byType(Switch),
+      );
+
+      // Verify default state is false (from mocked Profile)
+      expect(tester.widget<Switch>(pushSwitchFinder).value, false);
+
+      // Tap and wait for async mock API update
+      await tester.ensureVisible(pushSwitchFinder);
+      await tester.tap(pushSwitchFinder);
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpAndSettle();
+
+      // State should now be true
+      expect(tester.widget<Switch>(pushSwitchFinder).value, true);
+    });
+
+    testWidgets('Changing dropdown selection updates the UI state', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createRouterTestApp(child: const Scaffold(body: SettingsScreen())),
+      );
+      await tester.pumpAndSettle();
+
+      // Ensure "System" is initially visible for Appearance
+      expect(find.text("System"), findsOneWidget);
+
+      // Open the Appearance dropdown
+      await tester.tap(find.text("System"));
+      await tester.pumpAndSettle();
+
+      // Select "Dark" from the dropdown menu
+      final darkOption = find.text("Dark").last;
+      await tester.tap(darkOption);
+      await tester.pumpAndSettle();
+
+      // Verify the value changed
+      expect(find.text("System"), findsNothing);
+      expect(find.text("Dark"), findsOneWidget);
     });
   });
 }
