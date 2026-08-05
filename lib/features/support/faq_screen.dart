@@ -53,43 +53,47 @@ class FaqScreen extends ConsumerWidget {
             itemCount: faqs.length,
             itemBuilder: (context, index) {
               final faq = faqs[index];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
+              // FIX: Replaced Container with Padding + Material to preserve InkSplash effects
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Material(
                   color: AppColors.cards,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.textGrey.withOpacity(0.1),
-                  ),
-                ),
-                child: Theme(
-                  data: Theme.of(
-                    context,
-                  ).copyWith(dividerColor: Colors.transparent),
-                  child: ExpansionTile(
-                    iconColor: AppColors.primary,
-                    collapsedIconColor: AppColors.textGrey,
-                    title: Text(
-                      faq.question,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: AppColors.textGrey.withOpacity(0.1),
                     ),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: Text(
-                          faq.answer,
-                          style: const TextStyle(
-                            color: AppColors.textGrey,
-                            fontSize: 14,
-                            height: 1.5,
-                          ),
+                  ),
+                  child: Theme(
+                    data: Theme.of(
+                      context,
+                    ).copyWith(dividerColor: Colors.transparent),
+                    child: ExpansionTile(
+                      iconColor: AppColors.primary,
+                      collapsedIconColor: AppColors.textGrey,
+                      title: Text(
+                        faq.question,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: Text(
+                            faq.answer,
+                            style: const TextStyle(
+                              color: AppColors.textGrey,
+                              fontSize: 14,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

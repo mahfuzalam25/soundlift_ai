@@ -30,7 +30,6 @@ import 'package:soundlift_ai/features/notifications/notifications_screen.dart';
 import 'package:soundlift_ai/features/processing/processing_screen.dart';
 import 'package:soundlift_ai/features/referral/referral_screen.dart';
 import 'package:soundlift_ai/features/settings/settings_screen.dart';
-// NEW: Support screens imports
 import 'package:soundlift_ai/features/support/help_screen.dart';
 import 'package:soundlift_ai/features/support/support_screen.dart';
 import 'package:soundlift_ai/features/support/faq_screen.dart';
@@ -291,7 +290,6 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/support/faqs')) {
-          // NEW INTERCEPT: Support FAQs Mock Data
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -307,7 +305,6 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/support/tutorials')) {
-          // NEW INTERCEPT: Support Tutorials Mock Data
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -323,7 +320,6 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/support/docs')) {
-          // NEW INTERCEPT: Support Docs Mock Data
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -338,7 +334,6 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/support/contact')) {
-          // NEW INTERCEPT: Contact Support Mock Data
           if (options.method == 'POST') {
             return handler.resolve(
               Response(
@@ -484,7 +479,6 @@ Widget createRouterTestApp({
         builder: (context, state) =>
             const Scaffold(body: Text('Change Password Destination Screen')),
       ),
-      // NEW: Support Folder GoRouter destinations
       GoRoute(
         path: '/help/faq',
         builder: (context, state) =>
@@ -1709,7 +1703,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text("FAQ"));
+      // FIX: Ensure card is in viewport before tapping
+      final faqCard = find.text("FAQ");
+      await tester.ensureVisible(faqCard);
+      await tester.tap(faqCard);
       await tester.pumpAndSettle();
       expect(find.text("FAQ Destination Screen"), findsOneWidget);
     });
@@ -1723,7 +1720,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text("Tutorials"));
+      // FIX: Ensure card is in viewport before tapping
+      final tutorialsCard = find.text("Tutorials");
+      await tester.ensureVisible(tutorialsCard);
+      await tester.tap(tutorialsCard);
       await tester.pumpAndSettle();
       expect(find.text("Tutorials Destination Screen"), findsOneWidget);
     });
@@ -1737,7 +1737,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text("Documentation"));
+      // FIX: Ensure card is in viewport before tapping to prevent offstage Offset error
+      final docsCard = find.text("Documentation");
+      await tester.ensureVisible(docsCard);
+      await tester.tap(docsCard);
       await tester.pumpAndSettle();
       expect(find.text("Docs Destination Screen"), findsOneWidget);
     });
