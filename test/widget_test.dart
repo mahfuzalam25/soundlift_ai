@@ -36,7 +36,6 @@ import 'package:soundlift_ai/features/support/faq_screen.dart';
 import 'package:soundlift_ai/features/support/docs_screen.dart';
 import 'package:soundlift_ai/features/support/tutorials_screen.dart';
 import 'package:soundlift_ai/features/support/contact_support_screen.dart';
-// NEW: Upload screens imports
 import 'package:soundlift_ai/features/upload/upload_screen.dart';
 import 'package:soundlift_ai/features/upload/replace_audio_upload_screen.dart';
 
@@ -512,7 +511,6 @@ Widget createRouterTestApp({
         builder: (context, state) =>
             const Scaffold(body: Text('Tutorial Player Destination Screen')),
       ),
-      // NEW: Support destinations
       GoRoute(
         path: '/editor/video',
         builder: (context, state) =>
@@ -1683,6 +1681,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
+  // NEW: Support Folder Widget Tests
   group('HelpScreen Widget Tests', () {
     testWidgets('Renders HelpScreen UI elements correctly', (
       WidgetTester tester,
@@ -1711,6 +1710,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
+      // FIX: Ensure card is in viewport before tapping
       final faqCard = find.text("FAQ");
       await tester.ensureVisible(faqCard);
       await tester.tap(faqCard);
@@ -1727,6 +1727,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
+      // FIX: Ensure card is in viewport before tapping
       final tutorialsCard = find.text("Tutorials");
       await tester.ensureVisible(tutorialsCard);
       await tester.tap(tutorialsCard);
@@ -1743,6 +1744,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
       );
       await tester.pumpAndSettle();
 
+      // FIX: Ensure card is in viewport before tapping to prevent offstage Offset error
       final docsCard = find.text("Documentation");
       await tester.ensureVisible(docsCard);
       await tester.tap(docsCard);
@@ -1984,7 +1986,10 @@ ADMOB_INTERSTITIAL_IOS=test_id
       final submitBtn = find.text("Submit for Processing");
       await tester.ensureVisible(submitBtn);
       await tester.tap(submitBtn);
+
       await tester.pump(); // frame for snackbar
+      await tester.pump(const Duration(milliseconds: 50)); // allow animation
+      await tester.pump();
 
       expect(find.text("Please enter a project name."), findsOneWidget);
 
@@ -1994,6 +1999,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
       // Enter text and try again
       await tester.enterText(find.byType(TextField), "My Audio Project");
       await tester.tap(submitBtn);
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
       await tester.pump();
 
       expect(find.text("Please select a file first"), findsOneWidget);
@@ -2034,6 +2042,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
       final continueBtn = find.text("Continue to Editor");
       await tester.ensureVisible(continueBtn);
       await tester.tap(continueBtn);
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
       await tester.pump();
 
       expect(find.text("Please enter a project name"), findsOneWidget);
@@ -2042,6 +2053,9 @@ ADMOB_INTERSTITIAL_IOS=test_id
 
       await tester.enterText(find.byType(TextField), "My Video Project");
       await tester.tap(continueBtn);
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
       await tester.pump();
 
       expect(find.text("Add at least one video"), findsOneWidget);
@@ -2071,11 +2085,13 @@ ADMOB_INTERSTITIAL_IOS=test_id
 
       // Tap the project in the bottom sheet to add it
       final listTile = find.widgetWithText(ListTile, "Sample Audio Project");
+      await tester.ensureVisible(listTile);
       await tester.tap(listTile);
       await tester.pumpAndSettle();
 
       // Bottom sheet should close, and the file card should be visible
-      expect(find.text("Size: 0 B  •  Format: MP3"), findsOneWidget);
+      expect(find.textContaining("Size: 0 B"), findsOneWidget);
+      expect(find.textContaining("Format: MP3"), findsOneWidget);
     });
 
     testWidgets('Tapping video cloud download shows empty state Snackbar', (
