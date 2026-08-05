@@ -25,6 +25,7 @@ import 'package:soundlift_ai/features/profile/edit_profile_screen.dart';
 import 'package:soundlift_ai/features/profile/security_screen.dart';
 import 'package:soundlift_ai/features/projects/media_viewer_screen.dart';
 import 'package:soundlift_ai/features/billing/billing_screen.dart';
+import 'package:soundlift_ai/features/editor/video_editor_screen.dart'; // NEW: Imported VideoEditorScreen
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -1117,7 +1118,6 @@ ADMOB_INTERSTITIAL_IOS=test_id
     });
   });
 
-  // NEW: BillingScreen Widget Tests
   group('BillingScreen Widget Tests', () {
     testWidgets('Renders BillingScreen UI elements and loaded mock data', (
       WidgetTester tester,
@@ -1192,5 +1192,104 @@ ADMOB_INTERSTITIAL_IOS=test_id
         expect(find.text("Failed to download invoice."), findsOneWidget);
       },
     );
+  });
+
+  // NEW: VideoEditorScreen Widget Tests
+  group('VideoEditorScreen Widget Tests', () {
+    final mockVideos = [
+      {
+        'name': 'Test Video.mp4',
+        'networkUrl': 'http://localhost:8001/media/test_video.mp4',
+        'extension': 'mp4',
+      },
+    ];
+    final mockAudios = [
+      {
+        'name': 'Test Audio.mp3',
+        'networkUrl': 'http://localhost:8001/media/test_audio.mp3',
+        'extension': 'mp3',
+      },
+    ];
+
+    testWidgets('Renders VideoEditorScreen UI components', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: VideoEditorScreen(
+            projectName: "My Awesome Project",
+            videos: mockVideos,
+            audios: mockAudios,
+          ),
+        ),
+      );
+      // Wait for any initial player instantiation attempts to fail gracefully
+      await tester.pumpAndSettle();
+
+      expect(find.text("Video NLE Editor"), findsOneWidget);
+      expect(find.text("Export"), findsOneWidget);
+      expect(find.text("Editing: Test Video.mp4"), findsOneWidget);
+      expect(find.text("Video Sequence"), findsOneWidget);
+      expect(find.text("Audio Sequence"), findsOneWidget);
+      expect(find.text("Background Music"), findsOneWidget);
+      expect(find.text("Add Background Music"), findsOneWidget);
+
+      // Because native media players crash in tests, duration stays 0, safely triggering the fallback text
+      expect(find.text("Select clip to load duration..."), findsOneWidget);
+    });
+
+    testWidgets('Tapping Speed button cycles speed options', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: VideoEditorScreen(
+            projectName: "My Awesome Project",
+            videos: mockVideos,
+            audios: mockAudios,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final speedBtn = find.textContaining("Speed:");
+      expect(speedBtn, findsOneWidget);
+      expect(find.text("Speed: 1.0x"), findsOneWidget);
+
+      await tester.tap(speedBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text("Speed: 1.5x"), findsOneWidget);
+    });
+
+    testWidgets('Tapping Add Background Music opens Jamendo sheet', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        createRouterTestApp(
+          child: VideoEditorScreen(
+            projectName: "My Awesome Project",
+            videos: mockVideos,
+            audios: mockAudios,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final addBgmBtn = find.text("Add Background Music");
+      await tester.ensureVisible(addBgmBtn);
+      await tester.tap(addBgmBtn);
+
+      // Only pump once to render the bottom sheet frame without hanging the test runner on pending HTTP requests
+      await tester.pump();
+
+      expect(find.text("Music Library (Jamendo)"), findsOneWidget);
+    });
   });
 }
