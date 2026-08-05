@@ -29,12 +29,15 @@ import 'package:soundlift_ai/features/editor/video_editor_screen.dart';
 import 'package:soundlift_ai/features/notifications/notifications_screen.dart';
 import 'package:soundlift_ai/features/processing/processing_screen.dart';
 import 'package:soundlift_ai/features/referral/referral_screen.dart';
-import 'package:soundlift_ai/features/settings/settings_screen.dart'; // NEW: Imported SettingsScreen
+import 'package:soundlift_ai/features/settings/settings_screen.dart';
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
 // valid JSON to prevent Riverpod parsing crashes and hanging timers.
 final mockDio = Dio();
+
+// FIX: Added a state variable to make the mock profile API stateful across requests
+bool mockPushNotifications = false;
 
 void setupMockDio() {
   mockDio.interceptors.clear();
@@ -44,11 +47,24 @@ void setupMockDio() {
         final path = options.path;
 
         if (path.contains('/profile')) {
+          // FIX: Intercept PATCH requests to update the state variable
+          if (options.method == 'PATCH' && options.data is Map) {
+            final dataMap = options.data as Map;
+            if (dataMap.containsKey('push_notifications')) {
+              mockPushNotifications = dataMap['push_notifications'];
+            }
+          }
+
           return handler.resolve(
             Response(
               requestOptions: options,
               statusCode: 200,
-              data: {'name': 'Test User', 'profile_picture': null},
+              data: {
+                'name': 'Test User',
+                'profile_picture': null,
+                'push_notifications':
+                    mockPushNotifications, // Use the state variable
+              },
             ),
           );
         } else if (path.endsWith('/projects/')) {
@@ -1475,6 +1491,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
     testWidgets('Renders SettingsScreen UI elements and reads profile data', (
       WidgetTester tester,
     ) async {
+      mockPushNotifications = false; // Reset state
       SharedPreferences.setMockInitialValues({});
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: SettingsScreen())),
@@ -1497,6 +1514,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
     testWidgets('Toggling notification settings updates the switch state', (
       WidgetTester tester,
     ) async {
+      mockPushNotifications = false; // Reset state
       SharedPreferences.setMockInitialValues({});
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: SettingsScreen())),
@@ -1526,6 +1544,7 @@ ADMOB_INTERSTITIAL_IOS=test_id
     testWidgets('Changing dropdown selection updates the UI state', (
       WidgetTester tester,
     ) async {
+      mockPushNotifications = false; // Reset state
       SharedPreferences.setMockInitialValues({});
       await tester.pumpWidget(
         createRouterTestApp(child: const Scaffold(body: SettingsScreen())),
