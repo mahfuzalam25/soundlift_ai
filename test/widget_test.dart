@@ -7,7 +7,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:dio/dio.dart';
 import 'package:soundlift_ai/core/network/api_client.dart';
 import 'package:soundlift_ai/features/onboarding/onboarding_screen.dart';
-import 'package:soundlift_ai/features/processing/processing_screen.dart';
 import 'package:soundlift_ai/features/splash/splash_screen.dart';
 import 'package:soundlift_ai/features/auth/login_screen.dart';
 import 'package:soundlift_ai/features/auth/register_screen.dart';
@@ -28,7 +27,8 @@ import 'package:soundlift_ai/features/projects/media_viewer_screen.dart';
 import 'package:soundlift_ai/features/billing/billing_screen.dart';
 import 'package:soundlift_ai/features/editor/video_editor_screen.dart';
 import 'package:soundlift_ai/features/notifications/notifications_screen.dart';
-import 'package:soundlift_ai/features/referral/referral_screen.dart'; // NEW: Imported ReferralScreen
+import 'package:soundlift_ai/features/processing/processing_screen.dart';
+import 'package:soundlift_ai/features/referral/referral_screen.dart';
 
 // --- MOCK API SETUP ---
 // This safely intercepts all HTTP calls during testing, returning
@@ -246,7 +246,6 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/referrals/my-code/')) {
-          // NEW INTERCEPT: Referral Data Mock
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -260,7 +259,6 @@ void setupMockDio() {
             ),
           );
         } else if (path.contains('/referrals/claim/')) {
-          // NEW INTERCEPT: Referral Claim Post Action Mock
           return handler.resolve(
             Response(
               requestOptions: options,
@@ -1435,8 +1433,15 @@ ADMOB_INTERSTITIAL_IOS=test_id
       final claimBtn = find.text("Claim Reward");
       await tester.ensureVisible(claimBtn);
       await tester.tap(claimBtn);
-      await tester
-          .pump(); // Wait for the AsyncValue to update and trigger listener
+
+      // Trigger the tap and async Loading state
+      await tester.pump();
+
+      // Let the mock API Future resolve
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // Paint the resulting Snackbar frame
+      await tester.pump();
 
       expect(
         find.text("Referral code claimed! You earned 50 free minutes."),
